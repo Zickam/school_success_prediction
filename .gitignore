@@ -7,4 +7,4 @@
 /logs/*.gz
 
 /env/*.env
-!/env/example_*.env
+!/env/example/

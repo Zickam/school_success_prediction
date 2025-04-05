@@ -72,12 +72,16 @@ if __name__ == "__main__":
     # manager.generateClearedDotEnv(Path("example.env"))
     # print(manager.isDotEnvFull(Path("example.env")))
 
+    os.system("mkdir example")
+
     skip_filenames = ["old.env", "old_example.env", "run_me_after_changing_env.py"]
     for filename in os.listdir("./"):
         if filename in skip_filenames:
             continue
         if "example_" in filename:
             continue
+        if not (".env" in filename):
+            continue
 
         manager = Manager(Path(filename))
-        manager.generateClearedDotEnv(Path("example_" + filename))
+        manager.generateClearedDotEnv(Path("example/" + filename))
