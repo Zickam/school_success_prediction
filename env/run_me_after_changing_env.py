@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # manager.generateClearedDotEnv(Path("example.env"))
     # print(manager.isDotEnvFull(Path("example.env")))
 
-    skip_filenames = ["old.env", "old_example.env", "dot_env_manager.py"]
+    skip_filenames = ["old.env", "old_example.env", "run_me_after_changing_env.py"]
     for filename in os.listdir("./"):
         if filename in skip_filenames:
             continue
