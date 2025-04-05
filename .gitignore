@@ -1,0 +1,10 @@
+/.idea
+**/__pycache__
+
+/.venvg
+
+/logs/*.log
+/logs/*.gz
+
+/env/*.env
+!/env/example_*.env

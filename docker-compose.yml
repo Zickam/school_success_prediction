@@ -1,0 +1,42 @@
+services:
+  redis:
+    image: redis:latest
+    restart: always
+    volumes:
+      - db_redis:/root/redis
+      - db_redis:/data
+    command: redis-server --dir /data --save 60 1
+    networks:
+      - app_backend
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  tg_bot:
+    build:
+      context: .
+      dockerfile: Dockerfile_tg_bot
+#    container_name: tg_bot
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - env/tg_bot.env
+    volumes:
+      - $PWD:/usr/src/app
+    networks:
+      - app_backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+
+volumes:
+  db_redis:
+    name: db_redis
+    driver: local
+
+networks:
+  app_backend:
