@@ -10,6 +10,8 @@ from fastapi import Request, HTTPException, status, Depends
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from db.engine import init_models
+    await init_models()
     # from db import utilities
     # import db
     # from scheduler.init import async_scheduler
@@ -31,8 +33,6 @@ async def lifespan(app: FastAPI):
     # async_scheduler.start()
 
     yield
-
-from models.engine import SessionDep
 
 app = FastAPI(
     lifespan=lifespan,

@@ -31,11 +31,11 @@ def init(file_path: str):
     file_handler.rotator = rotator
     file_handler.namer = namer
 
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
 
     stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.WARNING)
+    stream_handler.setLevel(logging.INFO)
     stream_handler.setFormatter(formatter)
 
     logger.addHandler(file_handler)

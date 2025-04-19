@@ -11,9 +11,9 @@ from pydantic import BaseModel
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .. import models
-from ..models import schemas, engine
-from ..models import declaration
+from .. import db
+from ..db import schemas, engine
+from ..db import declaration
 
 router = APIRouter(tags=["User"], prefix="/user")
 
@@ -26,7 +26,8 @@ async def getUser(user_id: int):
     return user
 
 @router.post("", response_model=schemas.user.UserRead)
-async def create_user(user: schemas.user.UserCreate, session: AsyncSession = Depends(engine.getSession)):
+async def create_user(user: Annotated[dict, Depends(schemas.user.UserCreate)], session: AsyncSession = Depends(engine.getSession)):
+    logging.debug(user)
     new_user = declaration.user.User(**user.dict())
     session.add(new_user)
     await session.commit()
