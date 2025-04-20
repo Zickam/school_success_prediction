@@ -11,9 +11,10 @@ from ..engine import Base
 class User(Base):
     __tablename__ = 'users'
 
-    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
-    role = Column(String, nullable=False)
-    name = Column(String, nullable=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    chat_id = Column(Integer, unique=True)
+    role = Column(String)
+    name = Column(String)
 
     # def __repr__(self):
     #     return f"<User(id={self.id}, name={self.name})>"

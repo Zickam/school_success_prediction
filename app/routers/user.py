@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import uuid
 from typing import Annotated
 import os
 
@@ -15,8 +16,30 @@ from sqlalchemy import select, text
 from .. import db
 from ..db import schemas, engine
 from ..db import declaration
+from ..db.declaration.user import User
 
 router = APIRouter(tags=["User"], prefix="/user")
+
+
+@router.get("", responses={404: {}})
+async def getUser(
+    chat_id: int | None = None,
+    user_id: uuid.UUID | None = None,
+    session: AsyncSession = Depends(engine.getSession)
+):
+    logging.info(user_id)
+    query = select(User).where(
+        (User.chat_id.is_not(None) & (User.chat_id == chat_id)) | (User.id == user_id)
+    )
+
+    result = await session.execute(query)
+    users = result.scalars().all()
+    if len(users) == 1:
+        return users[0]
+    elif len(users) > 1:
+        return Response(status_code=409, content="chat_id and user_id don't correspond to one user")
+
+    return Response(status_code=404, content="User not found")
 
 
 @router.post("", response_model=schemas.user.UserRead, responses={404: {}})
@@ -24,23 +47,42 @@ async def createUser(
     user: Annotated[schemas.user.UserCreate, Depends()],
     session: AsyncSession = Depends(engine.getSession)
 ):
-    try:
-        new_user = declaration.user.User(**user.model_dump(exclude_unset=False))
-        session.add(new_user)
-        logging.info(new_user)
-        await session.flush()
-        await session.commit()
-        # await session.refresh(new_user)
-        logging.info(123123123123123123)
-        logging.info(new_user)
-        # result = await session.execute(select(declaration.user.User))
-        # users = result.scalars().all()
-        # logging.info(users)
-        return new_user
-    except Exception as e:
-        await session.rollback()
-        print("❌ Commit failed:", e)
-        raise HTTPException(status_code=500, detail=str(e))
+    result = await session.execute(select(User).where(User.chat_id == user.chat_id))
+    users = result.scalars().all()
+    if len(users) > 0:
+        return Response(status_code=409, content="User with such chat_id already exists")
+
+    new_user = declaration.user.User(**user.model_dump(exclude_unset=False))
+    session.add(new_user)
+    await session.commit()
+
+    return new_user
+
+
+# @router.post("", responses={404: {}})
+# async def createUser(
+#     user: Annotated[schemas.user.UserCreate, Depends()],
+#     session: AsyncSession = Depends(engine.getSession)
+# ):
+#     try:
+#         new_user = declaration.user.User(**user.model_dump(exclude_unset=False))
+#         session.add(new_user)
+#         logging.info(new_user)
+#         await session.commit()
+#         # await session.refresh(new_user)
+#         logging.info(123123123123123123)
+#         logging.info(new_user)
+#         await session.begin()
+#         result = await session.execute(select(declaration.user.User))
+#         await session.commit()
+#         logging.info(result)
+#         users = result.scalars().all()
+#         logging.info(users)
+#         return new_user
+#     except Exception as e:
+#         await session.rollback()
+#         logging.error("❌ Commit failed:", e)
+#         raise HTTPException(status_code=500, detail=str(e))
 
 # @router.post("", responses={404: {}})
 # async def createUser(user: Annotated[dict, Depends(pydantic_models.User_Pydantic)]):
