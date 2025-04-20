@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.routers import user, webhook
+from app.routers import user, webhook, school
 from app.auth_dependency import require_auth
 
 api_router = APIRouter(dependencies=[Depends(require_auth)])
@@ -8,6 +8,7 @@ api_router = APIRouter(dependencies=[Depends(require_auth)])
 routers = [
     user.router,
     webhook.router,
+    school.router
 ]
 
 for router in routers:

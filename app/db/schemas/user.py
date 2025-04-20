@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-import uuid
+from uuid import UUID
 
 from app.utility import AutoNameEnum, auto
 
@@ -13,7 +13,7 @@ class Roles(str, AutoNameEnum):
 
 # For reading
 class UserRead(BaseModel):
-    id: uuid.UUID
+    uuid: UUID
     role: Roles
     name: str | None
     chat_id: int | None
