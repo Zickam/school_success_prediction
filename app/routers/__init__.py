@@ -1,8 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.routers import user, webhook
+from app.auth_dependency import require_auth
 
-api_router = APIRouter()
+api_router = APIRouter(dependencies=[Depends(require_auth)])
 
 routers = [
     user.router,

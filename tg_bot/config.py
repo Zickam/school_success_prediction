@@ -4,10 +4,14 @@ import asyncio
 import time
 
 import aiogram
+import httpx
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import RedisStorage
 from redis.asyncio import Redis
+
+from utilities import CustomAsyncClient
+
 
 redis = Redis(host="redis")
 
@@ -24,3 +28,14 @@ bot.redis = redis
 storage = RedisStorage(redis)
 
 dp = Dispatcher(storage=storage)
+
+DATA_TRANSFER_PROTOCOL = "https" if os.getenv("TLS_KEYFILE") and os.getenv("TLS_CERTFILE") else "http"
+base_url = f"{DATA_TRANSFER_PROTOCOL}://app:{os.getenv('API_PORT')}/"
+# verify=False because this shit is used locally only
+httpx_client = CustomAsyncClient(
+    base_url=base_url,
+    verify=False,
+    auth_url=f"{base_url}token",
+    username=os.getenv("AUTH_USERNAME"),
+    password=os.getenv("AUTH_PASSWORD")
+)

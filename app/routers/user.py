@@ -11,9 +11,8 @@ from fastapi import Response, HTTPException
 from pydantic import BaseModel
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
+from sqlalchemy import select, text, or_
 
-from .. import db
 from ..db import schemas, engine
 from ..db import declaration
 from ..db.declaration.user import User
@@ -21,23 +20,29 @@ from ..db.declaration.user import User
 router = APIRouter(tags=["User"], prefix="/user")
 
 
-@router.get("", responses={404: {}})
+@router.get("", responses={404: {}}, response_model=schemas.user.UserRead)
 async def getUser(
     chat_id: int | None = None,
     user_id: uuid.UUID | None = None,
     session: AsyncSession = Depends(engine.getSession)
 ):
-    logging.info(user_id)
-    query = select(User).where(
-        (User.chat_id.is_not(None) & (User.chat_id == chat_id)) | (User.id == user_id)
-    )
+    filters = []
+    if chat_id is not None:
+        filters.append(User.chat_id == chat_id)
+    if user_id is not None:
+        filters.append(User.id == user_id)
 
+    if not filters:
+        return Response(status_code=400, content="Missing query params")
+
+    query = select(User).where(or_(*filters))
     result = await session.execute(query)
     users = result.scalars().all()
+
     if len(users) == 1:
         return users[0]
-    elif len(users) > 1:
-        return Response(status_code=409, content="chat_id and user_id don't correspond to one user")
+    elif users:
+        return Response(status_code=409, content="Multiple users found")
 
     return Response(status_code=404, content="User not found")
 

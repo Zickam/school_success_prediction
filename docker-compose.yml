@@ -24,6 +24,7 @@ services:
         condition: service_healthy
     env_file:
       - env/tg_bot.env
+      - env/app.env
     volumes:
       - $PWD:/usr/src/app
     networks:
