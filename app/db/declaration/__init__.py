@@ -1,17 +1,13 @@
-
-from . import user, school
+from sqlalchemy import Table, Column, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 
 from ..engine import Base, engine, getSession
+user_class_table = Table(
+    "user_class",
+    Base.metadata,
+    Column("user_uuid", UUID(as_uuid=True), ForeignKey("users.uuid"), primary_key=True),
+    Column("class_uuid", UUID(as_uuid=True), ForeignKey("classes.uuid"), primary_key=True)
+)
 
-# Base.metadata.create_all(engine)
 
-# # Step 5: Create a session
-# session = getSession()
-#
-# # Step 6: Add new data
-# new_user = User(name='Alice')
-# session.add(new_user)
-# session.commit()
-#
-# # Step 7: Query data
-# users = session.query(User).all()
+from . import user, school

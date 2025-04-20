@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Uuid, ForeignKey,
 from sqlalchemy.orm import relationship
 
 from ..engine import Base
+from . import user_class_table
 
 
 class School(Base):
@@ -23,3 +24,5 @@ class Class(Base):
 
     school_uuid = Column(UUID(as_uuid=True), ForeignKey('schools.uuid'))
     school = relationship("School")
+
+    users = relationship("User", secondary=user_class_table, back_populates="classes")

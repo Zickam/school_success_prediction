@@ -39,6 +39,7 @@ services:
     env_file:
       - env/app.env
       - env/db.env
+      - env/tg_bot.env
     networks:
       - app_backend
     volumes:

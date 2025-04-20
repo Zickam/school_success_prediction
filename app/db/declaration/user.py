@@ -3,12 +3,19 @@ import os
 import enum
 from sqlalchemy import create_engine, Column, Integer, String, UUID, Uuid, Enum
 import sqlalchemy as sa
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from uuid import uuid4
 
 from ..engine import Base
 
 from ..schemas.user import Roles
+
+
+from sqlalchemy import Table, Column, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+
+from . import user_class_table
+
 
 
 class User(Base):
@@ -19,5 +26,4 @@ class User(Base):
     role = Column(Enum(Roles))
     name = Column(String)
 
-    # def __repr__(self):
-    #     return f"<User(id={self.id}, name={self.name})>"
+    classes = relationship("Class", secondary=user_class_table, back_populates="users")
