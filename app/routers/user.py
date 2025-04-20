@@ -6,10 +6,11 @@ from typing import Annotated
 import os
 
 from fastapi import APIRouter
-from fastapi import Response
+from fastapi import Response, HTTPException
 from pydantic import BaseModel
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, text
 
 from .. import db
 from ..db import schemas, engine
@@ -18,22 +19,28 @@ from ..db import declaration
 router = APIRouter(tags=["User"], prefix="/user")
 
 
-@router.get("", response_model=schemas.user.UserRead, responses={404: {}})
-async def getUser(user_id: int):
-    user = declaration.user.User()
-    if not user:
-        return Response(status_code=404, content="User not found")
-    return user
-
-@router.post("", response_model=schemas.user.UserRead)
-async def create_user(user: Annotated[dict, Depends(schemas.user.UserCreate)], session: AsyncSession = Depends(engine.getSession)):
-    logging.debug(user)
-    new_user = declaration.user.User(**user.dict())
-    session.add(new_user)
-    await session.commit()
-    await session.refresh(new_user)
-    return new_user
-
+@router.post("", response_model=schemas.user.UserRead, responses={404: {}})
+async def createUser(
+    user: Annotated[schemas.user.UserCreate, Depends()],
+    session: AsyncSession = Depends(engine.getSession)
+):
+    try:
+        new_user = declaration.user.User(**user.model_dump(exclude_unset=False))
+        session.add(new_user)
+        logging.info(new_user)
+        await session.flush()
+        await session.commit()
+        # await session.refresh(new_user)
+        logging.info(123123123123123123)
+        logging.info(new_user)
+        # result = await session.execute(select(declaration.user.User))
+        # users = result.scalars().all()
+        # logging.info(users)
+        return new_user
+    except Exception as e:
+        await session.rollback()
+        print("❌ Commit failed:", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 # @router.post("", responses={404: {}})
 # async def createUser(user: Annotated[dict, Depends(pydantic_models.User_Pydantic)]):

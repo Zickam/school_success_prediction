@@ -1,5 +1,5 @@
 
-from . import user
+from . import user, school
 
 from ..engine import Base, engine, getSession
 
