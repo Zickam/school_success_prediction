@@ -6,25 +6,25 @@ from uuid import UUID
 from typing import Annotated
 import os
 
-from fastapi import APIRouter
-from fastapi import Response, HTTPException
+from fastapi import APIRouter, Response, HTTPException, Depends
 from pydantic import BaseModel
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, or_, not_
 
 from ..db import schemas, engine
 from ..db import declaration
 from ..db.declaration.user import User
+from ..db.schemas.user import UserCreate, User as UserSchema
+from ..db.engine import getSession
 
 router = APIRouter(tags=["User"], prefix="/user")
 
 
-@router.get("", responses={404: {}}, response_model=schemas.user.UserRead)
-async def getUser(
+@router.get("", responses={404: {}}, response_model=UserSchema)
+async def get_user(
     chat_id: int | None = None,
     user_uuid: UUID | None = None,
-    session: AsyncSession = Depends(engine.getSession)
+    session: AsyncSession = Depends(getSession)
 ):
     filters = []
     if chat_id is not None:
@@ -33,7 +33,7 @@ async def getUser(
         filters.append(User.uuid == user_uuid)
 
     if not filters:
-        return Response(status_code=400, content="Missing query params")
+        raise HTTPException(status_code=400, detail="Missing query params")
 
     query = select(User).where(or_(*filters))
     result = await session.execute(query)
@@ -42,26 +42,36 @@ async def getUser(
     if len(users) == 1:
         return users[0]
     elif users:
-        return Response(status_code=409, content="Multiple users found")
+        raise HTTPException(status_code=409, detail="Multiple users found")
 
-    return Response(status_code=404, content="User not found")
+    raise HTTPException(status_code=404, detail="User not found")
 
 
-@router.post("", response_model=schemas.user.UserRead, responses={404: {}})
-async def createUser(
-    user: Annotated[schemas.user.UserCreate, Depends()],
-    session: AsyncSession = Depends(engine.getSession)
+@router.post("", response_model=UserSchema)
+async def create_user(
+    user: UserCreate,
+    session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(select(User).where(User.chat_id.isnot(None) & (User.chat_id == user.chat_id)))
-    users = result.scalars().all()
-    if len(users) > 0:
-        return Response(status_code=409, content="User with such chat_id already exists")
+    try:
+        # Check if user with this chat_id already exists
+        result = await session.execute(
+            select(User).where(User.chat_id == user.chat_id)
+        )
+        existing_user = result.scalar_one_or_none()
+        if existing_user:
+            raise HTTPException(status_code=409, detail="User with such chat_id already exists")
 
-    new_user = declaration.user.User(**user.model_dump(exclude_unset=False))
-    session.add(new_user)
-    await session.commit()
+        # Create new user
+        new_user = User(**user.model_dump())
+        session.add(new_user)
+        await session.commit()
+        await session.refresh(new_user)
 
-    return new_user
+        return new_user
+    except Exception as e:
+        await session.rollback()
+        logging.error(f"Failed to create user: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # @router.post("", responses={404: {}})
@@ -88,7 +98,7 @@ async def createUser(
 #         await session.rollback()
 #         logging.error("❌ Commit failed:", e)
 #         raise HTTPException(status_code=500, detail=str(e))
-
+#
 # @router.post("", responses={404: {}})
 # async def createUser(user: Annotated[dict, Depends(pydantic_models.User_Pydantic)]):
 #     user: pydantic_models.User_Pydantic

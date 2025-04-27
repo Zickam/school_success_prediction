@@ -1,22 +1,11 @@
-import os
-
-import enum
-from sqlalchemy import create_engine, Column, Integer, String, UUID, Uuid, Enum
-import sqlalchemy as sa
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship
+from datetime import datetime
 from uuid import uuid4
+from sqlalchemy import Column, Integer, String, UUID, Enum, DateTime
+from sqlalchemy.orm import relationship
 
 from ..engine import Base
-
 from ..schemas.user import Roles
-
-
-from sqlalchemy import Table, Column, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
-
 from . import user_class_table
-
-
 
 class User(Base):
     __tablename__ = 'users'
@@ -25,5 +14,8 @@ class User(Base):
     chat_id = Column(Integer, unique=True)
     role = Column(Enum(Roles))
     name = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     classes = relationship("Class", secondary=user_class_table, back_populates="users")
+    grades = relationship("Grade", back_populates="user")

@@ -7,7 +7,7 @@ from aiogram.fsm.storage.base import StorageKey
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardMarkup
 
-from app.db.schemas.user import Roles
+from app.db.schemas.user import Roles, UserCreate
 
 async def getFSMContext(user_id: int) -> FSMContext:
     from tg_bot.config import dp, bot
@@ -24,15 +24,23 @@ async def getFSMContext(user_id: int) -> FSMContext:
 async def updateNewUser(msg: Message):
     from tg_bot.config import httpx_client
 
-    params = {
-        "chat_id": msg.chat.id,
-        "role": Roles.student.value
-    }
+    # Create user data
+    user_data = UserCreate(
+        name=msg.from_user.full_name,
+        chat_id=msg.chat.id,
+        role=Roles.student
+    )
 
+    # Send POST request with user data in body
     resp = await httpx_client.post(
         "user",
-        params=params
+        json=user_data.model_dump()
     )
+    
+    if resp.status_code != 200:
+        logging.error(f"Failed to create user: {resp.text}")
+        raise Exception("Failed to create user")
+
     state = await getFSMContext(msg.chat.id)
     await state.update_data({"user_uuid": resp.json()["uuid"]})
 
@@ -40,17 +48,14 @@ async def updateNewUser(msg: Message):
 async def updateExistingUser(msg: Message):
     from tg_bot.config import httpx_client
 
-    # await httpx_client.patch(
-    #     "user",
-    #     params={"chat_id": msg.chat.id},
-    # )
-    params = {
-        "chat_id": msg.chat.id,
-    }
     resp = await httpx_client.get(
         "user",
-        params=params
+        params={"chat_id": msg.chat.id}
     )
+
+    if resp.status_code != 200:
+        logging.error(f"Failed to get user: {resp.text}")
+        raise Exception("Failed to get user")
 
     state = await getFSMContext(msg.chat.id)
     await state.update_data({"user_uuid": resp.json()["uuid"]})

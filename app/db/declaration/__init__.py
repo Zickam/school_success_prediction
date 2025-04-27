@@ -1,7 +1,9 @@
 from sqlalchemy import Table, Column, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 
-from ..engine import Base, engine, getSession
+from ..engine import Base
+
+# Association table for many-to-many relationship between users and classes
 user_class_table = Table(
     "user_class",
     Base.metadata,
@@ -9,5 +11,16 @@ user_class_table = Table(
     Column("class_uuid", UUID(as_uuid=True), ForeignKey("classes.uuid"), primary_key=True)
 )
 
+# Import models
+from .user import User
+from .school import School, Class, Subject, Grade
 
-from . import user, school
+# Export all models
+__all__ = [
+    'User',
+    'School',
+    'Class',
+    'Subject',
+    'Grade',
+    'user_class_table'
+]

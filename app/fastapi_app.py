@@ -12,32 +12,21 @@ from fastapi import Request, HTTPException, status, Depends
 async def lifespan(app: FastAPI):
     from db.engine import init_models
     await init_models()
-    # from db import utilities
-    # import db
-    # from scheduler.init import async_scheduler
-    #
-    # await utilities.initSchemasAndTortoise(
-    #     db.TORTOISE_ORM_CONFIG
-    # )  # it is crucial to place it before any routers initialization because we need to fully initialize models first
-    #
-    # from db import utilities
-    # from db import TORTOISE_ORM_CONFIG
-    # import asyncio
-    # asyncio.run(utilities.initSchemasAndTortoise(
-    #     TORTOISE_ORM_CONFIG))  # BE VERY CAREFUL WITH THIS BECAUSE IT HELPS THE OPENAPI TO DETECT ALL THE INCLUDED FIELDS
 
-    from app.routers import webhook, auth
+    from app.routers import webhook, auth, school, ml
     app.include_router(auth.router)
     app.include_router(webhook.router)
+    app.include_router(school.router)
+    app.include_router(ml.router)
 
     from app.routers import api_router
     app.include_router(api_router)
-
-    # async_scheduler.start()
 
     yield
 
 app = FastAPI(
     lifespan=lifespan,
-    # dependencies=[SessionDep]
+    title="School Success Prediction API",
+    description="API for managing schools, classes, subjects, and grades with ML-powered predictions",
+    version="1.0.0"
 )
