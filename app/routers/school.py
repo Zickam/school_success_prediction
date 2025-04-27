@@ -212,7 +212,7 @@ async def get_class_students(
     if not class_:
         raise HTTPException(status_code=404, detail="Class not found")
     
-    return [user for user in class_.users if user.role == Roles.STUDENT]
+    return [user for user in class_.users if user.role == Roles.student]
 
 @router.get("/classes/{class_id}/teachers", response_model=List[UserSchema])
 async def get_class_teachers(
@@ -226,7 +226,7 @@ async def get_class_teachers(
     if not class_:
         raise HTTPException(status_code=404, detail="Class not found")
     
-    return [user for user in class_.users if user.role == Roles.TEACHER]
+    return [user for user in class_.users if user.role == Roles.teacher]
 
 @router.get("/users/{user_uuid}/grades", response_model=List[GradeSchema])
 async def get_user_grades(
