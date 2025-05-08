@@ -1,0 +1,16 @@
+artifact_uri: file:///C:/Users/motve/Desktop/papka/1studing/1python%20main/school_success_prediction/dataset%20experiments/mlruns/0/8ef0f047ffa44947834a6742a8b958d8/artifacts
+deleted_time: 1746685692317
+end_time: 1746685184735
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 8ef0f047ffa44947834a6742a8b958d8
+run_name: LogisticRegression_tuning
+run_uuid: 8ef0f047ffa44947834a6742a8b958d8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1746685180592
+status: 3
+tags: []
+user_id: motve

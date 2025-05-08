@@ -1,0 +1,16 @@
+artifact_uri: file:///C:/Users/motve/Desktop/papka/1studing/1python%20main/school_success_prediction/dataset%20experiments/mlruns/0/740eb28ea50e483a87b7468d05b5d2e9/artifacts
+deleted_time: 1746686798332
+end_time: 1746685701474
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 740eb28ea50e483a87b7468d05b5d2e9
+run_name: scaler_run
+run_uuid: 740eb28ea50e483a87b7468d05b5d2e9
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1746685697543
+status: 3
+tags: []
+user_id: motve

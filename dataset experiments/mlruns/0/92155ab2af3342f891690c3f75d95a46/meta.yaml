@@ -1,0 +1,16 @@
+artifact_uri: file:///C:/Users/motve/Desktop/papka/1studing/1python%20main/school_success_prediction/dataset%20experiments/mlruns/0/92155ab2af3342f891690c3f75d95a46/artifacts
+deleted_time: 1746685214347
+end_time: 1746684638363
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: 92155ab2af3342f891690c3f75d95a46
+run_name: RandomForest_tuning
+run_uuid: 92155ab2af3342f891690c3f75d95a46
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1746684626450
+status: 3
+tags: []
+user_id: motve

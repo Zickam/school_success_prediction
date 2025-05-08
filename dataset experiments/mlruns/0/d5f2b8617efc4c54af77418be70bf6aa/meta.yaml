@@ -1,0 +1,16 @@
+artifact_uri: file:///C:/Users/motve/Desktop/papka/1studing/1python%20main/school_success_prediction/dataset%20experiments/mlruns/0/d5f2b8617efc4c54af77418be70bf6aa/artifacts
+deleted_time: 1746685214346
+end_time: 1746684626444
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: deleted
+run_id: d5f2b8617efc4c54af77418be70bf6aa
+run_name: SVM_tuning
+run_uuid: d5f2b8617efc4c54af77418be70bf6aa
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1746684622233
+status: 3
+tags: []
+user_id: motve
