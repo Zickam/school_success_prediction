@@ -13,13 +13,9 @@ async def lifespan(app: FastAPI):
     from db.engine import init_models
     await init_models()
 
-    from app.routers import webhook, auth, school, ml
-    app.include_router(auth.router)
-    app.include_router(webhook.router)
-    app.include_router(school.router)
-    app.include_router(ml.router)
-
-    from app.routers import api_router
+    from app.routers import api_router, webhook, auth
+    app.include_router(webhook.router)  # Include webhook router directly to bypass auth
+    app.include_router(auth.router)     # Include auth router directly to bypass auth
     app.include_router(api_router)
 
     yield
