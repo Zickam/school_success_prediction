@@ -1,46 +1,59 @@
+import asyncio
+import logging
 import os
 import sys
-import asyncio
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(SCRIPT_DIR))
-sys.path.append(os.path.dirname(os.path.join(SCRIPT_DIR, "../", "logging_setup.py")))
+# Add the parent directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import logging_setup
-logging_setup.init("logs/tg_bot.log")
-import logging
+from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.types import BotCommand
 
+from tg_bot.config import BOT_TOKEN, USE_REDIS, test_api_connection
+from tg_bot.routers.user.init_routers import router as user_router
 
-# async def addExpirationNotificationsToExistingUsers():
-#     from tg_bot.user.routers.keys import getFSMContext
-#     from tg_bot.user.routers.keys import addConfigExpirationNotification
-#     from app import models
-#
-#     for config in await models.Config.all():
-#         if await config.isActive():
-#             fsm = await getFSMContext(config.user_id)
-#             await addConfigExpirationNotification(config, config.user_id, fsm)
-#             logging.info(f"added expiration notification trigger for {config.user_id}")
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+async def set_commands(bot: Bot):
+    """Set bot commands"""
+    commands = [
+        BotCommand(command="start", description="Start the bot"),
+        BotCommand(command="help", description="Show help"),
+        BotCommand(command="menu", description="Show menu")
+    ]
+    await bot.set_my_commands(commands)
 
 async def main():
-    from config import dp, bot
-    from filters import IsPrivate, IsPrivateCallback
-    from routers.user.init_routers import router as user_router
-    # await bot.delete_webhook(drop_pending_updates=True)
+    """Main function"""
+    # Test API connection
+    if not await test_api_connection():
+        logger.error("Failed to connect to API. Please check if the API is running and accessible.")
+        return
 
-    dp.message.filter(IsPrivate())
-    dp.callback_query.filter(IsPrivateCallback())
-
-    dp.include_routers(
-        user_router,
-        # user_routers.router,
-    )
-
+    # Initialize bot and dispatcher
+    bot = Bot(token=BOT_TOKEN)
+    
+    # Use Redis storage if enabled, otherwise use memory storage
+    if USE_REDIS:
+        storage = RedisStorage.from_url("redis://redis:6379/0")
+    else:
+        storage = MemoryStorage()
+    
+    dp = Dispatcher(storage=storage)
+    
+    # Include routers
+    dp.include_router(user_router)
+    
+    # Set bot commands
+    await set_commands(bot)
+    
+    # Start polling
+    logger.info("Starting bot...")
     await dp.start_polling(bot)
-
-    logging.info("Bot polling started")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

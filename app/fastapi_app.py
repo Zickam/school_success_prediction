@@ -18,24 +18,14 @@ if env_path.exists():
                 key, value = line.strip().split('=', 1)
                 os.environ[key] = value.strip('"')
 
-from fastapi import FastAPI
-from fastapi import Request, HTTPException, status, Depends
+from fastapi import FastAPI, Depends
+from fastapi import Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.engine import getSession
-from app.routers import (
-    api_router,
-    auth_router,
-    user_router,
-    school_router,
-    class_router,
-    subject_router,
-    grade_router,
-    invitation_router,
-    webhook_router
-)
-from app.telegram.setup.auto_init import AutoInitializer
+from app.db.session import get_session, Base, engine
+from app.routers import api_router, public_router, webhook_router
+from tg_bot.setup.auto_init import AutoInitializer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -43,32 +33,17 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from app.db.engine import init_models
-    await init_models()
+    """Lifespan context manager for database models and demo data initialization"""
+    # Initialize database models
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     logger.info("Database models initialized")
 
     # Initialize demo data
-    session_gen = getSession()
-    try:
-        session = await anext(session_gen)
-        try:
-            auto_init = AutoInitializer(session)
-            await auto_init.initialize()
-            logger.info("Demo data initialized successfully")
-        finally:
-            await session.close()
-    except Exception as e:
-        logger.error(f"Failed to initialize demo data: {e}")
-        raise
-    finally:
-        await session_gen.aclose()
-
-    # Include routers
-    app.include_router(webhook_router)  # Include webhook router directly to bypass auth
-    app.include_router(auth_router)     # Include auth router directly to bypass auth
-    app.include_router(api_router)      # Include main API router with authentication
-    logger.info("Routers included")
-
+    session = await get_session()
+    async with session as db:
+        initializer = AutoInitializer(db)
+        await initializer.initialize()
     yield
 
 app = FastAPI(
@@ -90,9 +65,14 @@ app.add_middleware(
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    status = {
-        "status": "ok",
-        "timestamp": time.time()
-    }
-    logger.info(f"Health check: {status}")
-    return status
+    """Health check endpoint"""
+    return {"status": "healthy"}
+
+# Include public router (no auth required)
+app.include_router(public_router)
+
+# Include authenticated router
+app.include_router(api_router)
+
+# Include webhook router without prefix (it already has one)
+app.include_router(webhook_router)

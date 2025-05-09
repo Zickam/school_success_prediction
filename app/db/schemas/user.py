@@ -8,12 +8,13 @@ from app.utility import AutoNameEnum, auto
 
 
 class Roles(str, Enum):
-    student = "student"
-    parent = "parent"
-    subject_teacher = "subject_teacher"
-    homeroom_teacher = "homeroom_teacher"
-    deputy_principal = "deputy_principal"
+    """User roles"""
     principal = "principal"
+    deputy_principal = "deputy_principal"
+    homeroom_teacher = "homeroom_teacher"
+    subject_teacher = "subject_teacher"
+    parent = "parent"
+    student = "student"
 
     @classmethod
     def get_hierarchy_level(cls, role: "Roles") -> int:

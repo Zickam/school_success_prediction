@@ -17,7 +17,7 @@ from ..db.declaration import User
 from ..db.schemas.user import UserCreate, UserUpdate, User as UserSchema
 from ..db.engine import getSession
 
-router = APIRouter(tags=["User"], prefix="/user")
+router = APIRouter(tags=["User"])
 
 
 @router.get("", responses={404: {}}, response_model=UserSchema)

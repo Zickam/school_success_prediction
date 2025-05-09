@@ -3,8 +3,8 @@ import os
 import logging
 import datetime
 
-from fastapi import APIRouter
-from fastapi import Response, Request, Query
+from fastapi import APIRouter, Request, HTTPException, status
+from fastapi.responses import JSONResponse
 
 router = APIRouter(tags=["Webhook"], prefix="/webhook")
 
@@ -12,6 +12,26 @@ logging.info(f"Initializing hidden router for webhooks: {router.prefix}. ({__fil
 
 
 @router.get("/healthcheck")
-async def dockerHealthCheck():
-    return Response(status_code=200)
+async def webhook_healthcheck():
+    """Health check endpoint for webhook"""
+    return {"status": "ok"}
+
+@router.post("/")
+async def webhook(request: Request):
+    """Handle incoming webhook requests"""
+    try:
+        # Get the request body
+        body = await request.json()
+        logging.info(f"Received webhook: {body}")
+        
+        # Process the webhook
+        # TODO: Implement webhook processing logic
+        
+        return JSONResponse(content={"status": "ok"})
+    except Exception as e:
+        logging.error(f"Error processing webhook: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error processing webhook"
+        )
 

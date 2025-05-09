@@ -6,3 +6,4 @@ sqlalchemy[asyncio]
 python-jose
 python-multipart
 aiogram
+asyncpg
