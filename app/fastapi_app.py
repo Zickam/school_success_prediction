@@ -35,26 +35,30 @@ from app.routers import (
     invitation_router,
     webhook_router
 )
-from app.telegram.handlers.bot_handler import BotHandler
+from app.telegram.setup.auto_init import AutoInitializer
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from app.db.engine import init_models
     await init_models()
+    logger.info("Database models initialized")
 
-    # Initialize bot and demo data
+    # Initialize demo data
     session_gen = getSession()
     try:
         session = await anext(session_gen)
         try:
-            bot_handler = BotHandler(session)
-            await bot_handler.initialize()
-            await bot_handler.run()  # Start the bot
+            auto_init = AutoInitializer(session)
+            await auto_init.initialize()
+            logger.info("Demo data initialized successfully")
         finally:
             await session.close()
     except Exception as e:
-        logging.error(f"Failed to initialize bot: {e}")
+        logger.error(f"Failed to initialize demo data: {e}")
         raise
     finally:
         await session_gen.aclose()
@@ -63,6 +67,7 @@ async def lifespan(app: FastAPI):
     app.include_router(webhook_router)  # Include webhook router directly to bypass auth
     app.include_router(auth_router)     # Include auth router directly to bypass auth
     app.include_router(api_router)      # Include main API router with authentication
+    logger.info("Routers included")
 
     yield
 
@@ -85,4 +90,9 @@ app.add_middleware(
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    status = {
+        "status": "ok",
+        "timestamp": time.time()
+    }
+    logger.info(f"Health check: {status}")
+    return status

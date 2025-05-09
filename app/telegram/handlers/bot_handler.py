@@ -14,18 +14,21 @@ from app.db.schemas.user import Roles
 from .role_handler import RoleHandler
 from ..menu import get_role_menu, get_role_welcome_message
 
+logger = logging.getLogger(__name__)
+
 class BotHandler:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.token = os.getenv("BOT_TOKEN")
         if not self.token:
             raise ValueError("BOT_TOKEN environment variable is not set")
-        logging.info(f"Bot token: {self.token}")
+        logger.info(f"Bot token: {self.token}")
         self.bot = Bot(token=self.token)
         self.dp = Dispatcher()
         self.role_handler = RoleHandler(session)
         self.auto_init = AutoInitializer(session)
         self._setup_handlers()
+        self._is_running = False
 
     def _setup_handlers(self):
         """Set up command and message handlers"""
@@ -44,10 +47,30 @@ class BotHandler:
         """Initialize the bot and demo data"""
         # Initialize demo data
         await self.auto_init.initialize()
+        logger.info("Demo data initialized")
 
     async def run(self):
         """Run the bot"""
-        await self.dp.start_polling(self.bot)
+        if self._is_running:
+            logger.warning("Bot is already running")
+            return
+
+        try:
+            self._is_running = True
+            logger.info("Starting bot polling...")
+            await self.dp.start_polling(self.bot)
+        except Exception as e:
+            logger.error(f"Error in bot polling: {e}")
+            self._is_running = False
+            raise
+        finally:
+            self._is_running = False
+            logger.info("Bot polling stopped")
+
+    @property
+    def is_running(self) -> bool:
+        """Check if the bot is running"""
+        return self._is_running
 
     async def start(self, message: Message):
         """Handle /start command"""
