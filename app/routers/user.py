@@ -13,8 +13,8 @@ from sqlalchemy import select, text, or_, not_
 
 from ..db import schemas, engine
 from ..db import declaration
-from ..db.declaration.user import User
-from ..db.schemas.user import UserCreate, User as UserSchema
+from ..db.declaration import User
+from ..db.schemas.user import UserCreate, UserUpdate, User as UserSchema
 from ..db.engine import getSession
 
 router = APIRouter(tags=["User"], prefix="/user")

@@ -11,9 +11,16 @@ user_class_table = Table(
     Column("class_uuid", UUID(as_uuid=True), ForeignKey("classes.uuid"), primary_key=True)
 )
 
+# Association table for parent-child relationships
+parent_child = Table(
+    "parent_child",
+    Base.metadata,
+    Column("parent_uuid", UUID(as_uuid=True), ForeignKey("users.uuid"), primary_key=True),
+    Column("child_uuid", UUID(as_uuid=True), ForeignKey("users.uuid"), primary_key=True)
+)
+
 # Import models
-from .user import User
-from .school import School, Class, Subject, Grade
+from .models import User, School, Class, Subject, Grade, Invitation
 
 # Export all models
 __all__ = [
@@ -22,5 +29,7 @@ __all__ = [
     'Class',
     'Subject',
     'Grade',
-    'user_class_table'
+    'Invitation',
+    'user_class_table',
+    'parent_child'
 ]
