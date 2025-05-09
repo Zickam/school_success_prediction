@@ -14,6 +14,7 @@ from tg_bot.config import httpx_client
 from tg_bot.common import updateUserDecorator
 from app.db.schemas.user import Roles
 from tg_bot.keyboards.menu import get_role_menu, get_role_welcome_message, get_role_error_message
+from tg_bot.keyboards.grades import get_grades_menu_keyboard
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -273,4 +274,79 @@ async def my_children(callback: CallbackQuery):
             await callback.message.answer("Failed to get user data.")
     except Exception as e:
         logger.error(f"Error in my_children: {e}")
+        await callback.message.answer(str(e))
+
+@router.callback_query(F.data == "statistics")
+async def show_statistics(callback: CallbackQuery):
+    """Show statistics"""
+    try:
+        response = await make_api_request("GET", f"/user?chat_id={callback.from_user.id}")
+        
+        if response.status_code == 200:
+            user_data = response.json()
+            role = Roles(user_data["role"])
+            user_uuid = user_data["uuid"]
+            
+            # Get all grades for statistics
+            grades_response = await make_api_request(
+                "GET",
+                "/grades",
+                params={"student_id": user_uuid}
+            )
+            
+            if grades_response:
+                # Count grades
+                grade_counts = {}
+                for grade in grades_response:
+                    value = grade['value']
+                    grade_counts[value] = grade_counts.get(value, 0) + 1
+                
+                # Get attendance data
+                attendance_response = await make_api_request(
+                    "GET",
+                    f"/attendance/student/{user_uuid}"
+                )
+                
+                attendance_stats = {
+                    "present": 0,
+                    "absent": 0,
+                    "late": 0
+                }
+                
+                if attendance_response:
+                    for record in attendance_response:
+                        status = record['status']
+                        attendance_stats[status] = attendance_stats.get(status, 0) + 1
+                
+                # Format statistics message
+                text = "📊 Statistics\n\n"
+                
+                # Grade distribution
+                for grade in sorted(grade_counts.keys(), reverse=True):
+                    text += f"Grade {grade}: {grade_counts[grade]} times\n"
+                
+                # Calculate average
+                if grade_counts:
+                    total = sum(grade * count for grade, count in grade_counts.items())
+                    count = sum(grade_counts.values())
+                    average = total / count
+                    text += f"\nAverage Grade: {average:.2f}\n"
+                
+                # Attendance statistics
+                text += f"\nAbsent Days: {attendance_stats['absent']}\n"
+                text += f"Late Days: {attendance_stats['late']}\n"
+                
+                # Calculate attendance rate
+                total_days = sum(attendance_stats.values())
+                if total_days > 0:
+                    attendance_rate = (attendance_stats['present'] / total_days) * 100
+                    text += f"Attendance Rate: {attendance_rate:.1f}%"
+                
+                await callback.message.answer(text)
+            else:
+                await callback.message.answer("❌ Failed to fetch grades")
+        else:
+            await callback.message.answer("Failed to get user data.")
+    except Exception as e:
+        logger.error(f"Error in statistics: {e}")
         await callback.message.answer(str(e))

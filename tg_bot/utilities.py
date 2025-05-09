@@ -4,7 +4,7 @@ import os
 import time
 import logging
 import typing
-from typing import Callable
+from typing import Callable, Optional, Dict, Any
 from functools import wraps
 import asyncio
 
@@ -13,6 +13,11 @@ from aiogram.fsm.storage.base import StorageKey
 
 import httpx
 from httpx import AsyncClient, URL, USE_CLIENT_DEFAULT, Response
+
+# Initialize API configuration
+API_BASE_URL = os.getenv("API_BASE_URL", "http://app:8443")
+API_USERNAME = os.getenv("API_USERNAME", "admin")
+API_PASSWORD = os.getenv("API_PASSWORD", "admin")
 
 class CustomAsyncClient(AsyncClient):
     def __init__(self, auth_url: str, username: str, password: str, *args, **kwargs):
@@ -85,3 +90,47 @@ class CustomAsyncClient(AsyncClient):
             logging.warning(f"status_code: {response.status_code} response.text: {response.text}")
 
         return response
+
+# Initialize the API client after the class is defined
+api_client = CustomAsyncClient(
+    auth_url=f"{API_BASE_URL}/token",
+    username=API_USERNAME,
+    password=API_PASSWORD,
+    base_url=API_BASE_URL
+)
+
+async def make_api_request(
+    method: str,
+    endpoint: str,
+    params: Optional[Dict[str, Any]] = None,
+    json: Optional[Dict[str, Any]] = None
+) -> Optional[Dict[str, Any]]:
+    """
+    Make an API request to the backend service
+    
+    Args:
+        method: HTTP method (GET, POST, etc.)
+        endpoint: API endpoint path
+        params: Query parameters
+        json: JSON body for POST/PUT requests
+        
+    Returns:
+        Response JSON data or None if request failed
+    """
+    try:
+        response = await api_client.request(
+            method=method,
+            url=endpoint,
+            params=params,
+            json=json
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            logging.error(f"API request failed: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        logging.error(f"Error making API request: {str(e)}")
+        return None

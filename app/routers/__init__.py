@@ -9,6 +9,7 @@ from .grade import router as grade_router
 from .invitation import router as invitation_router
 from .webhook import router as webhook_router
 from .ml import router as ml_router
+from .statistics import router as statistics_router
 from ..auth_dependency import require_auth
 
 # Main API router with authentication
@@ -28,6 +29,7 @@ api_router.include_router(subject_router, prefix="/subject", tags=["subject"])
 api_router.include_router(grade_router, prefix="/grade", tags=["grade"])
 api_router.include_router(invitation_router, prefix="/invitation", tags=["invitation"])
 api_router.include_router(ml_router, prefix="/ml", tags=["ml"])
+api_router.include_router(statistics_router, prefix="/statistics", tags=["statistics"])
 
 __all__ = [
     'api_router',
@@ -40,5 +42,6 @@ __all__ = [
     'grade_router',
     'invitation_router',
     'webhook_router',
-    'ml_router'
+    'ml_router',
+    'statistics_router'
 ]

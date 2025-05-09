@@ -8,33 +8,34 @@ def get_role_menu(role: Roles) -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text="📊 Dashboard", callback_data="dashboard")],
             [InlineKeyboardButton(text="👥 Manage Users", callback_data="manage_users")],
             [InlineKeyboardButton(text="📚 Manage Classes", callback_data="manage_classes")],
+            [InlineKeyboardButton(text="📈 Statistics", callback_data="statistics")],
             [InlineKeyboardButton(text="⚙️ Settings", callback_data="settings")]
         ])
     elif role == Roles.homeroom_teacher:
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="👥 My Class", callback_data="my_class")],
-            [InlineKeyboardButton(text="📊 Grades", callback_data="view_grades")],
+            [InlineKeyboardButton(text="📈 Statistics", callback_data="statistics")],
             [InlineKeyboardButton(text="📝 Reports", callback_data="reports")],
             [InlineKeyboardButton(text="⚙️ Settings", callback_data="settings")]
         ])
     elif role == Roles.subject_teacher:
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="📚 My Subjects", callback_data="my_subjects")],
-            [InlineKeyboardButton(text="📊 Grades", callback_data="view_grades")],
+            [InlineKeyboardButton(text="📈 Statistics", callback_data="statistics")],
             [InlineKeyboardButton(text="📝 Reports", callback_data="reports")],
             [InlineKeyboardButton(text="⚙️ Settings", callback_data="settings")]
         ])
     elif role == Roles.parent:
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="👶 My Children", callback_data="my_children")],
-            [InlineKeyboardButton(text="📊 Grades", callback_data="view_grades")],
+            [InlineKeyboardButton(text="📈 Statistics", callback_data="statistics")],
             [InlineKeyboardButton(text="📝 Reports", callback_data="reports")],
             [InlineKeyboardButton(text="⚙️ Settings", callback_data="settings")]
         ])
     else:  # student
         return InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📊 My Grades", callback_data="my_grades")],
             [InlineKeyboardButton(text="📚 My Subjects", callback_data="my_subjects")],
+            [InlineKeyboardButton(text="📈 Statistics", callback_data="statistics")],
             [InlineKeyboardButton(text="📝 Reports", callback_data="reports")],
             [InlineKeyboardButton(text="⚙️ Settings", callback_data="settings")]
         ])
