@@ -7,7 +7,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db.session import Base
 from app.db.session import get_session
-from app.logging_setup import init as init_logging
+from logging_setup import init as init_logging
 
 # Create in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"

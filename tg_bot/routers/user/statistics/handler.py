@@ -10,7 +10,7 @@ from tg_bot.keyboards.statistics import (
     get_subject_selection_keyboard,
     get_time_period_keyboard
 )
-from tg_bot.utilities import make_api_request
+from tg_bot.api_client import make_api_request
 
 router = Router()
 router.message.filter(IsPrivate())

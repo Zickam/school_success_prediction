@@ -12,14 +12,5 @@ aiosqlite>=0.17.0,<0.18.0
 python-jose[cryptography]>=3.3.0,<3.4.0
 passlib[bcrypt]>=1.7.4,<1.8.0
 
-# Telegram Bot
-aiogram>=3.0.0,<4.0.0
-httpx>=0.24.0,<0.25.0
-yarl>=1.8.0,<1.9.0
-
-# Caching
-redis>=4.5.0,<4.6.0
-
 # Utilities
-nest-asyncio>=1.5.0,<1.6.0
 pydantic>=1.8.0,<2.0.0 

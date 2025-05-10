@@ -11,14 +11,13 @@ import httpx
 from tg_bot.filters import IsPrivate, IsPrivateCallback
 from tg_bot import keyboards
 from tg_bot.config import httpx_client
-from tg_bot.common import updateUserDecorator
+from tg_bot.user_management import updateUserDecorator
 from app.db.schemas.user import Roles
 from tg_bot.keyboards.menu import get_role_menu, get_role_welcome_message, get_role_error_message
 from tg_bot.keyboards.grades import get_grades_menu_keyboard
-from tg_bot.utils.logger import get_logger
 
 # Configure logger
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 router = Router()
 router.message.filter(IsPrivate())

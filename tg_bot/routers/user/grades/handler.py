@@ -3,7 +3,7 @@ from aiogram.types import Message
 from aiogram.filters import Command
 
 from tg_bot.filters import IsPrivate
-from tg_bot.utilities import make_api_request
+from tg_bot.api_client import make_api_request
 
 router = Router()
 router.message.filter(IsPrivate())
