@@ -4,6 +4,7 @@ from sqlalchemy import String, Integer, ForeignKey, DateTime, Enum, Table, Colum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.session import Base
 from app.db.schemas.user import Roles
+import enum
 
 # Association tables
 teacher_subject = Table(
@@ -12,6 +13,17 @@ teacher_subject = Table(
     Column("teacher_id", Integer, ForeignKey("teacher.id"), primary_key=True),
     Column("subject_id", Integer, ForeignKey("subject.id"), primary_key=True)
 )
+
+class User(Base):
+    """User model for authentication"""
+    __tablename__ = "user"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_id: Mapped[str] = mapped_column(String(100), unique=True)
+    name: Mapped[str] = mapped_column(String(100))
+    role: Mapped[Roles] = mapped_column(Enum(Roles))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class School(Base):
     """School model"""
@@ -90,6 +102,7 @@ class Student(Base):
     # Relationships
     class_: Mapped["Class"] = relationship(back_populates="students")
     grades: Mapped[List["Grade"]] = relationship(back_populates="student")
+    attendance: Mapped[List["Attendance"]] = relationship(back_populates="student")
 
 class Grade(Base):
     """Grade model"""
@@ -104,4 +117,24 @@ class Grade(Base):
 
     # Relationships
     student: Mapped["Student"] = relationship(back_populates="grades")
-    subject: Mapped["Subject"] = relationship(back_populates="grades") 
+    subject: Mapped["Subject"] = relationship(back_populates="grades")
+
+class AttendanceStatus(enum.Enum):
+    """Attendance status enum"""
+    PRESENT = "present"
+    ABSENT = "absent"
+    LATE = "late"
+
+class Attendance(Base):
+    """Attendance model"""
+    __tablename__ = "attendance"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("student.id"))
+    date: Mapped[datetime] = mapped_column(DateTime)
+    status: Mapped[str] = mapped_column(Enum(AttendanceStatus))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    student: Mapped["Student"] = relationship(back_populates="attendance") 

@@ -287,64 +287,39 @@ async def show_statistics(callback: CallbackQuery):
             role = Roles(user_data["role"])
             user_uuid = user_data["uuid"]
             
-            # Get all grades for statistics
-            grades_response = await make_api_request(
+            # Get statistics
+            stats_response = await make_api_request(
                 "GET",
-                "/grades",
-                params={"student_id": user_uuid}
+                f"/statistics/student/{user_uuid}"
             )
             
-            if grades_response:
-                # Count grades
-                grade_counts = {}
-                for grade in grades_response:
-                    value = grade['value']
-                    grade_counts[value] = grade_counts.get(value, 0) + 1
-                
-                # Get attendance data
-                attendance_response = await make_api_request(
-                    "GET",
-                    f"/attendance/student/{user_uuid}"
-                )
-                
-                attendance_stats = {
-                    "present": 0,
-                    "absent": 0,
-                    "late": 0
-                }
-                
-                if attendance_response:
-                    for record in attendance_response:
-                        status = record['status']
-                        attendance_stats[status] = attendance_stats.get(status, 0) + 1
+            if stats_response:
+                stats = stats_response.json()
                 
                 # Format statistics message
                 text = "📊 Statistics\n\n"
                 
                 # Grade distribution
-                for grade in sorted(grade_counts.keys(), reverse=True):
-                    text += f"Grade {grade}: {grade_counts[grade]} times\n"
-                
-                # Calculate average
-                if grade_counts:
-                    total = sum(grade * count for grade, count in grade_counts.items())
-                    count = sum(grade_counts.values())
-                    average = total / count
-                    text += f"\nAverage Grade: {average:.2f}\n"
+                if stats["grade_distribution"]:
+                    for grade in sorted(stats["grade_distribution"].keys(), reverse=True):
+                        text += f"Grade {grade}: {stats['grade_distribution'][grade]} times\n"
+                    
+                    # Average grade
+                    if stats["average_grade"] is not None:
+                        text += f"\nAverage Grade: {stats['average_grade']:.2f}\n"
                 
                 # Attendance statistics
+                attendance_stats = stats["attendance_stats"]
                 text += f"\nAbsent Days: {attendance_stats['absent']}\n"
                 text += f"Late Days: {attendance_stats['late']}\n"
                 
-                # Calculate attendance rate
-                total_days = sum(attendance_stats.values())
-                if total_days > 0:
-                    attendance_rate = (attendance_stats['present'] / total_days) * 100
-                    text += f"Attendance Rate: {attendance_rate:.1f}%"
+                # Attendance rate
+                if stats["attendance_rate"] is not None:
+                    text += f"Attendance Rate: {stats['attendance_rate']:.1f}%"
                 
                 await callback.message.answer(text)
             else:
-                await callback.message.answer("❌ Failed to fetch grades")
+                await callback.message.answer("❌ Failed to fetch statistics")
         else:
             await callback.message.answer("Failed to get user data.")
     except Exception as e:
