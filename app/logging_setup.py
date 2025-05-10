@@ -41,4 +41,4 @@ def init(file_path: str = None):
     
     # Set logging level for specific modules
     logging.getLogger("uvicorn").setLevel(logging.WARNING)
-    logging.getLogger("fastapi").setLevel(logging.WARNING)
+    logging.getLogger("fastapi").setLevel(logging.WARNING) 

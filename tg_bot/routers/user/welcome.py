@@ -1,7 +1,7 @@
 import logging
 from uuid import UUID
 
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -15,9 +15,10 @@ from tg_bot.common import updateUserDecorator
 from app.db.schemas.user import Roles
 from tg_bot.keyboards.menu import get_role_menu, get_role_welcome_message, get_role_error_message
 from tg_bot.keyboards.grades import get_grades_menu_keyboard
+from tg_bot.utils.logger import get_logger
 
 # Configure logger
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = Router()
 router.message.filter(IsPrivate())
@@ -28,7 +29,7 @@ class UserStates(StatesGroup):
     waiting_for_name = State()
     waiting_for_role = State()
 
-async def make_api_request(method, url, **kwargs):
+async def make_api_request(method: str, url: str, **kwargs) -> httpx.Response:
     """Make API request with error handling"""
     try:
         response = await httpx_client.request(method, url, **kwargs)
@@ -277,51 +278,64 @@ async def my_children(callback: CallbackQuery):
         await callback.message.answer(str(e))
 
 @router.callback_query(F.data == "statistics")
-async def show_statistics(callback: CallbackQuery):
-    """Show statistics"""
+async def show_statistics(callback_query: CallbackQuery, bot: Bot):
+    """Show user statistics"""
     try:
-        response = await make_api_request("GET", f"/user?chat_id={callback.from_user.id}")
-        
-        if response.status_code == 200:
-            user_data = response.json()
-            role = Roles(user_data["role"])
-            user_uuid = user_data["uuid"]
-            
-            # Get statistics
-            stats_response = await make_api_request(
-                "GET",
-                f"/statistics/student/{user_uuid}"
+        # Get user data first
+        user_response = await make_api_request(
+            "GET",
+            f"/user?chat_id={callback_query.from_user.id}"
+        )
+        if not user_response:
+            await callback_query.message.answer(
+                "❌ Failed to get user data. Please try again later."
             )
-            
-            if stats_response:
-                stats = stats_response.json()
-                
-                # Format statistics message
-                text = "📊 Statistics\n\n"
-                
-                # Grade distribution
-                if stats["grade_distribution"]:
-                    for grade in sorted(stats["grade_distribution"].keys(), reverse=True):
-                        text += f"Grade {grade}: {stats['grade_distribution'][grade]} times\n"
-                    
-                    # Average grade
-                    if stats["average_grade"] is not None:
-                        text += f"\nAverage Grade: {stats['average_grade']:.2f}\n"
-                
-                # Attendance statistics
-                attendance_stats = stats["attendance_stats"]
-                text += f"\nAbsent Days: {attendance_stats['absent']}\n"
-                text += f"Late Days: {attendance_stats['late']}\n"
-                
-                # Attendance rate
-                if stats["attendance_rate"] is not None:
-                    text += f"Attendance Rate: {stats['attendance_rate']:.1f}%"
-                
-                await callback.message.answer(text)
-            else:
-                await callback.message.answer("❌ Failed to fetch statistics")
-        else:
-            await callback.message.answer("Failed to get user data.")
+            return
+
+        user_data = user_response.json()
+        if not user_data or "uuid" not in user_data:
+            await callback_query.message.answer(
+                "❌ User data not found. Please try again later."
+            )
+            return
+
+        # Get statistics
+        stats_response = await make_api_request(
+            "GET",
+            f"/statistics/student/{user_data['uuid']}"
+        )
+        if not stats_response:
+            await callback_query.message.answer(
+                "❌ Failed to get statistics. Please try again later."
+            )
+            return
+
+        stats_data = stats_response.json()
+        
+        # Format the message
+        message = "📊 Your Statistics:\n\n"
+        
+        # Grades section
+        message += "📚 Grades:\n"
+        grades = stats_data["grades"]["distribution"]
+        for grade, count in sorted(grades.items(), reverse=True):
+            message += f"• {count} {grade} grade{'s' if count > 1 else ''}\n"
+        
+        if grades:
+            message += f"\nAverage Grade: {stats_data['grades']['average']}\n"
+        
+        # Attendance section
+        message += "\n📅 Attendance:\n"
+        attendance = stats_data["attendance"]
+        message += f"• {attendance['present_days']} days present\n"
+        message += f"• {attendance['absent_days']} days absent\n"
+        if attendance['late_days'] > 0:
+            message += f"• {attendance['late_days']} days late\n"
+        
+        await callback_query.message.answer(message)
+        
     except Exception as e:
-        logger.error(f"Error in statistics: {e}")
-        await callback.message.answer(str(e))
+        logger.error(f"Error showing statistics: {e}")
+        await callback_query.message.answer(
+            "❌ An error occurred while fetching statistics. Please try again later."
+        )
