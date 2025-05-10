@@ -24,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session, Base, engine
-from app.routers import api_router, public_router, webhook_router
+from app.routers import api_router, webhook_router
 from tg_bot.setup.auto_init import AutoInitializer
 
 # Configure logging
@@ -67,9 +67,6 @@ app.add_middleware(
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
-
-# Include public router (no auth required)
-app.include_router(public_router)
 
 # Include authenticated router
 app.include_router(api_router)

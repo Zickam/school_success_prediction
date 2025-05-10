@@ -36,23 +36,7 @@ class PolicyManager:
 
     async def can_manage_user(self, manager: User, target: User) -> bool:
         """Check if manager can manage target user"""
-        # Users can't manage themselves
-        if manager.uuid == target.uuid:
-            return False
-
-        # Check role hierarchy
-        if not manager.role.can_manage(target.role):
-            return False
-
-        # Additional checks for specific roles
-        if manager.role == Roles.subject_teacher:
-            # Subject teachers can only manage students in their subjects
-            shared_classes = set(c.uuid for c in manager.classes).intersection(
-                set(c.uuid for c in target.classes)
-            )
-            return bool(shared_classes)
-
-        return True
+        return manager.role.can_manage(target.role)
 
     async def can_view_grade(self, viewer: User, grade: Grade) -> bool:
         """Check if viewer can view a grade"""
@@ -122,39 +106,47 @@ class PolicyManager:
 
         return False
 
-    async def can_invite_to_class(self, inviter: User, class_: Class, target_role: Roles) -> bool:
-        """Check if inviter can invite someone to a class"""
-        # Check if inviter has permission to invite for this role
-        if not inviter.role.can_invite(target_role):
-            return False
+    async def can_view_grades(self, viewer: User, student: User) -> bool:
+        """Check if viewer can view student's grades"""
+        # Students can only view their own grades
+        if viewer.role == Roles.student:
+            return viewer.uuid == student.uuid
 
-        # Check if inviter has access to the class
-        if inviter.role == Roles.subject_teacher:
-            # Subject teachers can only invite students to classes they teach
-            return class_.uuid in (c.uuid for c in inviter.classes)
+        # Parents can view their children's grades
+        if viewer.role == Roles.parent:
+            return student.uuid in (viewer.parent_children or [])
 
-        if inviter.role == Roles.homeroom_teacher:
-            # Homeroom teachers can invite students to their class
-            return class_.uuid in (c.uuid for c in inviter.classes)
+        # Teachers can view grades of students in their classes
+        if viewer.role in [Roles.subject_teacher, Roles.homeroom_teacher]:
+            # Get student's classes
+            student_classes = [c.uuid for c in student.classes]
+            # Get teacher's classes
+            teacher_classes = [c.uuid for c in viewer.classes]
+            return any(c in teacher_classes for c in student_classes)
 
-        # Admins can invite to any class
-        if inviter.role in [Roles.deputy_principal, Roles.principal]:
+        # Admins can view all grades
+        if viewer.role in [Roles.deputy_principal, Roles.principal]:
             return True
 
         return False
 
-    async def can_invite_to_subject(self, inviter: User, subject: Subject, target_role: Roles) -> bool:
-        """Check if inviter can invite someone to a subject"""
-        # Check if inviter has permission to invite for this role
-        if not inviter.role.can_invite(target_role):
+    async def can_edit_grades(self, editor: User, student: User, subject: Subject) -> bool:
+        """Check if editor can edit grades for a student in a subject"""
+        # Only teachers and admins can edit grades
+        if editor.role not in [Roles.subject_teacher, Roles.homeroom_teacher, 
+                             Roles.deputy_principal, Roles.principal]:
             return False
 
-        # Subject teachers can invite students to their subjects
-        if inviter.role == Roles.subject_teacher:
-            return subject.uuid in (inviter.teacher_subjects or [])
+        # Subject teachers can only edit grades for their subjects
+        if editor.role == Roles.subject_teacher:
+            return subject.uuid in (editor.teacher_subjects or [])
 
-        # Admins can invite to any subject
-        if inviter.role in [Roles.deputy_principal, Roles.principal]:
+        # Homeroom teachers can edit grades for students in their class
+        if editor.role == Roles.homeroom_teacher:
+            return any(c.uuid == editor.managed_class.uuid for c in student.classes)
+
+        # Admins can edit all grades
+        if editor.role in [Roles.deputy_principal, Roles.principal]:
             return True
 
         return False 

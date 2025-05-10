@@ -33,19 +33,6 @@ class Roles(str, Enum):
         """Checks if this role can manage the other role"""
         return self.get_hierarchy_level(self) > self.get_hierarchy_level(other_role)
 
-    def can_invite(self, target_role: "Roles") -> bool:
-        """Checks if this role can invite users with the target role"""
-        # Special case: parents can only invite other parents
-        if self == Roles.parent:
-            return target_role == Roles.parent
-        
-        # Special case: subject teachers can only invite students
-        if self == Roles.subject_teacher:
-            return target_role == Roles.student
-        
-        # For other roles, use hierarchy
-        return self.get_hierarchy_level(self) > self.get_hierarchy_level(target_role)
-
 
 class TeacherSubject(BaseModel):
     subject_uuid: UUID

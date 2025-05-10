@@ -65,12 +65,3 @@ def get_role_menu(role: Roles) -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text="📝 Reports", callback_data="reports")],
             [InlineKeyboardButton(text="⚙️ Settings", callback_data="settings")]
         ])
-
-def keyboardAcceptInvite(invitation_uuid: str) -> InlineKeyboardMarkup:
-    """Create keyboard for accepting invitations"""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="✅ Accept", callback_data=f"join|{invitation_uuid}"),
-            InlineKeyboardButton(text="❌ Decline", callback_data="menu")
-        ]
-    ])

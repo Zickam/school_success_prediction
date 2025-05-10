@@ -20,7 +20,7 @@ parent_child = Table(
 )
 
 # Import models
-from .models import User, School, Class, Subject, Grade, Invitation
+from .models import User, School, Class, Subject, Grade
 
 # Export all models
 __all__ = [
@@ -29,7 +29,6 @@ __all__ = [
     'Class',
     'Subject',
     'Grade',
-    'Invitation',
     'user_class_table',
     'parent_child'
 ]

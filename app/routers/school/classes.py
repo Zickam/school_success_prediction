@@ -1,6 +1,6 @@
+from __future__ import annotations
 from typing import List
 from uuid import UUID
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -8,10 +8,11 @@ from sqlalchemy.orm import selectinload
 
 from ...db.engine import getSession
 from ...db.declaration import Class, User
-from ...db.schemas.school import ClassCreate, ClassUpdate, Class as ClassSchema
+from ...db.schemas.class_ import ClassCreate, ClassUpdate, ClassResponse as ClassSchema
 from ...db.schemas.user import User as UserSchema, Roles
+from ...policy import PolicyManager
 
-router = APIRouter(prefix="/classes")
+router = APIRouter(tags=["Class"], prefix="/classes")
 
 @router.post("/", response_model=ClassSchema)
 async def create_class(
@@ -26,19 +27,20 @@ async def create_class(
 
 @router.get("/", response_model=List[ClassSchema])
 async def get_classes(
-    skip: int = 0,
-    limit: int = 100,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(select(Class).offset(skip).limit(limit))
-    return result.scalars().all()
+    result = await session.execute(select(Class))
+    classes = result.scalars().all()
+    return classes
 
 @router.get("/{class_id}", response_model=ClassSchema)
 async def get_class(
     class_id: UUID,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(select(Class).where(Class.uuid == class_id))
+    result = await session.execute(
+        select(Class).where(Class.uuid == class_id)
+    )
     class_ = result.scalar_one_or_none()
     if class_ is None:
         raise HTTPException(status_code=404, detail="Class not found")
@@ -50,30 +52,35 @@ async def update_class(
     class_update: ClassUpdate,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(select(Class).where(Class.uuid == class_id))
+    result = await session.execute(
+        select(Class).where(Class.uuid == class_id)
+    )
     class_ = result.scalar_one_or_none()
     if class_ is None:
         raise HTTPException(status_code=404, detail="Class not found")
-    
+
     for field, value in class_update.model_dump(exclude_unset=True).items():
         setattr(class_, field, value)
-    
+
     await session.commit()
     await session.refresh(class_)
     return class_
 
-@router.delete("/{class_id}", status_code=204)
+@router.delete("/{class_id}")
 async def delete_class(
     class_id: UUID,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(select(Class).where(Class.uuid == class_id))
+    result = await session.execute(
+        select(Class).where(Class.uuid == class_id)
+    )
     class_ = result.scalar_one_or_none()
     if class_ is None:
         raise HTTPException(status_code=404, detail="Class not found")
-    
+
     await session.delete(class_)
     await session.commit()
+    return {"message": "Class deleted successfully"}
 
 @router.get("/{class_id}/students", response_model=List[UserSchema])
 async def get_class_students(
@@ -131,16 +138,4 @@ async def join_class(
     user.classes.append(class_)
     await session.commit()
     await session.refresh(class_)
-    return class_
-
-@router.get("/{class_id}/invite_link", response_model=str)
-async def get_class_invite_link(
-    class_id: UUID,
-    session: AsyncSession = Depends(getSession)
-):
-    result = await session.execute(select(Class).where(Class.uuid == class_id))
-    class_ = result.scalar_one_or_none()
-    if class_ is None:
-        raise HTTPException(status_code=404, detail="Class not found")
-    
-    return f"t.me/{os.getenv('BOT_URL')}?start={class_.uuid}" 
+    return class_ 

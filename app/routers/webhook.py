@@ -6,17 +6,17 @@ import datetime
 from fastapi import APIRouter, Request, HTTPException, status
 from fastapi.responses import JSONResponse
 
-router = APIRouter(tags=["Webhook"], prefix="/webhook")
+webhook_router = APIRouter(tags=["Webhook"], prefix="/webhook")
 
-logging.info(f"Initializing hidden router for webhooks: {router.prefix}. ({__file__})")
+logging.info(f"Initializing hidden router for webhooks: {webhook_router.prefix}. ({__file__})")
 
 
-@router.get("/healthcheck")
+@webhook_router.get("/healthcheck")
 async def webhook_healthcheck():
     """Health check endpoint for webhook"""
     return {"status": "ok"}
 
-@router.post("/")
+@webhook_router.post("/")
 async def webhook(request: Request):
     """Handle incoming webhook requests"""
     try:

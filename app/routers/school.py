@@ -17,6 +17,7 @@ from ..db.schemas.school import (
     GradeCreate, GradeUpdate, Grade as GradeSchema
 )
 from ..db.schemas.user import User as UserSchema, Roles
+from ..policy import PolicyManager
 
 router = APIRouter(
     prefix="/schools",
@@ -38,12 +39,11 @@ async def create_school(
 
 @router.get("/", response_model=List[SchoolSchema])
 async def get_schools(
-    skip: int = 0,
-    limit: int = 100,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(select(School).offset(skip).limit(limit))
-    return result.scalars().all()
+    result = await session.execute(select(School))
+    schools = result.scalars().all()
+    return schools
 
 
 @router.get("/{school_id}", response_model=SchoolSchema)
@@ -51,7 +51,9 @@ async def get_school(
     school_id: UUID,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(select(School).where(School.uuid == school_id))
+    result = await session.execute(
+        select(School).where(School.uuid == school_id)
+    )
     school = result.scalar_one_or_none()
     if school is None:
         raise HTTPException(status_code=404, detail="School not found")
@@ -64,7 +66,9 @@ async def update_school(
     school_update: SchoolUpdate,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(select(School).where(School.uuid == school_id))
+    result = await session.execute(
+        select(School).where(School.uuid == school_id)
+    )
     school = result.scalar_one_or_none()
     if school is None:
         raise HTTPException(status_code=404, detail="School not found")
@@ -82,13 +86,16 @@ async def delete_school(
     school_id: UUID,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(select(School).where(School.uuid == school_id))
+    result = await session.execute(
+        select(School).where(School.uuid == school_id)
+    )
     school = result.scalar_one_or_none()
     if school is None:
         raise HTTPException(status_code=404, detail="School not found")
     
     await session.delete(school)
     await session.commit()
+    return {"message": "School deleted successfully"}
 
 
 @router.post("/classes/", response_model=ClassSchema)
@@ -158,18 +165,6 @@ async def delete_class(
     await session.commit()
 
 
-@router.get("/classes/{class_id}/invite_link", response_model=str)
-async def get_class_invite_link(
-    class_id: UUID,
-    session: AsyncSession = Depends(getSession)
-):
-    result = await session.execute(select(Class).where(Class.uuid == class_id))
-    class_ = result.scalar_one_or_none()
-    if class_ is None:
-        raise HTTPException(status_code=404, detail="Class not found")
-    
-    return f"t.me/{os.getenv('BOT_URL')}?start={class_.uuid}"
-
 @router.post("/classes/{class_id}/join", response_model=ClassSchema)
 async def join_class(
     class_id: UUID,
@@ -200,6 +195,7 @@ async def join_class(
     await session.refresh(class_)
     return class_
 
+
 @router.get("/classes/{class_id}/students", response_model=List[UserSchema])
 async def get_class_students(
     class_id: UUID,
@@ -213,6 +209,7 @@ async def get_class_students(
         raise HTTPException(status_code=404, detail="Class not found")
     
     return [user for user in class_.users if user.role == Roles.student]
+
 
 @router.get("/classes/{class_id}/teachers", response_model=List[UserSchema])
 async def get_class_teachers(
@@ -228,6 +225,7 @@ async def get_class_teachers(
     
     return [user for user in class_.users if user.role == Roles.teacher]
 
+
 @router.get("/users/{user_uuid}/grades", response_model=List[GradeSchema])
 async def get_user_grades(
     user_uuid: UUID,
@@ -237,6 +235,7 @@ async def get_user_grades(
         select(Grade).where(Grade.user_uuid == user_uuid)
     )
     return result.scalars().all()
+
 
 @router.get("/users/{user_uuid}/classes", response_model=List[ClassSchema])
 async def get_user_classes(

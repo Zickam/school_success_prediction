@@ -1,4 +1,0 @@
-httpx
-aiogram
-yarl
-redis

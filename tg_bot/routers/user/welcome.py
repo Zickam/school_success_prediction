@@ -127,38 +127,6 @@ async def process_role(callback: CallbackQuery, state: FSMContext):
     finally:
         await state.clear()
 
-@router.callback_query(F.data == "dashboard")
-async def dashboard(callback: CallbackQuery):
-    """Show dashboard for admin roles"""
-    try:
-        response = await make_api_request("GET", f"/user?chat_id={callback.from_user.id}")
-        
-        if response.status_code == 200:
-            user_data = response.json()
-            role = Roles(user_data["role"])
-            
-            if role in [Roles.principal, Roles.deputy_principal]:
-                # Get school stats
-                school_response = await make_api_request("GET", "/school/stats")
-                if school_response.status_code == 200:
-                    stats = school_response.json()
-                    await callback.message.answer(
-                        f"📊 School Dashboard\n\n"
-                        f"Total Students: {stats['total_students']}\n"
-                        f"Total Teachers: {stats['total_teachers']}\n"
-                        f"Total Classes: {stats['total_classes']}\n"
-                        f"Average Grade: {stats['average_grade']:.2f}"
-                    )
-                else:
-                    await callback.message.answer("Failed to get school statistics.")
-            else:
-                await callback.message.answer(get_role_error_message(role, "dashboard"))
-        else:
-            await callback.message.answer("Failed to get user data.")
-    except Exception as e:
-        logger.error(f"Error in dashboard: {e}")
-        await callback.message.answer(str(e))
-
 @router.callback_query(F.data == "my_class")
 async def my_class(callback: CallbackQuery):
     """Show homeroom teacher's class"""
@@ -189,65 +157,6 @@ async def my_class(callback: CallbackQuery):
             await callback.message.answer("Failed to get user data.")
     except Exception as e:
         logger.error(f"Error in my_class: {e}")
-        await callback.message.answer(str(e))
-
-@router.callback_query(F.data == "my_subjects")
-async def my_subjects(callback: CallbackQuery):
-    """Show subject teacher's subjects"""
-    try:
-        response = await make_api_request("GET", f"/user?chat_id={callback.from_user.id}")
-        
-        if response.status_code == 200:
-            user_data = response.json()
-            role = Roles(user_data["role"])
-            
-            if role == Roles.subject_teacher:
-                subjects = user_data.get("teacher_subjects", [])
-                if subjects:
-                    message = "📚 Your Subjects:\n\n"
-                    for subject in subjects:
-                        message += f"- {subject['subject_name']}\n"
-                    await callback.message.answer(message)
-                else:
-                    await callback.message.answer("You don't have any subjects assigned.")
-            else:
-                await callback.message.answer(get_role_error_message(role, "my_subjects"))
-        else:
-            await callback.message.answer("Failed to get user data.")
-    except Exception as e:
-        logger.error(f"Error in my_subjects: {e}")
-        await callback.message.answer(str(e))
-
-@router.callback_query(F.data == "my_grades")
-async def my_grades(callback: CallbackQuery):
-    """Show student's grades"""
-    try:
-        response = await make_api_request("GET", f"/user?chat_id={callback.from_user.id}")
-        
-        if response.status_code == 200:
-            user_data = response.json()
-            role = Roles(user_data["role"])
-            
-            if role == Roles.student:
-                # Get student's grades
-                grades_response = await make_api_request("GET", f"/grade/student/{user_data['uuid']}")
-                if grades_response.status_code == 200:
-                    grades = grades_response.json()
-                    if grades:
-                        message = "📊 Your Grades:\n\n"
-                        for grade in grades:
-                            message += f"{grade['subject_name']}: {grade['value']}\n"
-                        await callback.message.answer(message)
-                    else:
-                        await callback.message.answer("You don't have any grades yet.")
-                else:
-                    await callback.message.answer("Failed to get grades.")
-            else:
-                await callback.message.answer(get_role_error_message(role, "my_grades"))
-        else:
-            await callback.message.answer("Failed to get user data.")
-    except Exception as e:
-        logger.error(f"Error in my_grades: {e}")
         await callback.message.answer(str(e))
 
 @router.callback_query(F.data == "my_children")
