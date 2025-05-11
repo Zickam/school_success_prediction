@@ -1,22 +1,9 @@
-from __future__ import annotations
 import logging
 import os
 import sys
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-
-# Add the parent directory to Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Load environment variables from tg_bot.env
-env_path = Path(__file__).parent.parent / "env" / "tg_bot.env"
-if env_path.exists():
-    with open(env_path) as f:
-        for line in f:
-            if line.strip() and not line.startswith('#'):
-                key, value = line.strip().split('=', 1)
-                os.environ[key] = value.strip('"')
 
 from fastapi import FastAPI, Depends
 from fastapi import Request, HTTPException, status

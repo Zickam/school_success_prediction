@@ -1,24 +1,23 @@
-from __future__ import annotations
-import asyncio
-import logging
-import os
 import sys
+import os
 from pathlib import Path
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
+import asyncio
+import logging
+
 import logging_setup
-logging_setup.init()
-
-import uvicorn
 import nest_asyncio
-
-nest_asyncio.apply()
+import uvicorn
 
 from fastapi_app import app  # necessary for uvicorn
 
+logging_setup.init()
+
+nest_asyncio.apply()
 
 def run():
     ssl_keyfile = os.getenv("TLS_KEYFILE")
