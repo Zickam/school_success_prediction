@@ -44,29 +44,29 @@ async def show_grades_statistics(message: Message):
                 attendance_stats[status] = attendance_stats.get(status, 0) + 1
         
         # Format statistics message
-        text = "📊 Your Statistics:\n\n"
+        text = "📊 Ваша статистика:\n\n"
         
         # Grade distribution
         for grade in sorted(grade_counts.keys(), reverse=True):
-            text += f"Grade {grade}: {grade_counts[grade]} times\n"
+            text += f"Оценка {grade}: {grade_counts[grade]} раз\n"
         
         # Calculate average
         if grade_counts:
             total = sum(grade * count for grade, count in grade_counts.items())
             count = sum(grade_counts.values())
             average = total / count
-            text += f"\nAverage Grade: {average:.2f}\n"
+            text += f"\nСредний балл: {average:.2f}\n"
         
         # Attendance statistics
-        text += f"\nAbsent Days: {attendance_stats['absent']}\n"
-        text += f"Late Days: {attendance_stats['late']}\n"
+        text += f"\nПропущено дней: {attendance_stats['absent']}\n"
+        text += f"Опозданий: {attendance_stats['late']}\n"
         
         # Calculate attendance rate
         total_days = sum(attendance_stats.values())
         if total_days > 0:
             attendance_rate = (attendance_stats['present'] / total_days) * 100
-            text += f"Attendance Rate: {attendance_rate:.1f}%"
+            text += f"Процент посещаемости: {attendance_rate:.1f}%"
         
         await message.answer(text)
     else:
-        await message.answer("❌ Failed to fetch grades") 
+        await message.answer("❌ Не удалось получить оценки") 

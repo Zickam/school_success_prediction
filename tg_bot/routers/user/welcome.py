@@ -67,7 +67,7 @@ async def start(message: Message, state: FSMContext):
             if "404" in str(e):
                 # User doesn't exist, start registration
                 await state.set_state(UserStates.waiting_for_name)
-                await message.answer("Welcome! Please enter your name:")
+                await message.answer("Добро пожаловать! Пожалуйста, введите ваше имя:")
             else:
                 raise e
     except Exception as e:
@@ -82,12 +82,12 @@ async def process_name(message: Message, state: FSMContext):
     
     # Create keyboard for role selection
     keyboard = [
-        [{"text": "👨‍🏫 Teacher", "callback_data": "role_teacher"}],
-        [{"text": "👨‍👩‍👧‍👦 Parent", "callback_data": "role_parent"}],
-        [{"text": "👨‍🎓 Student", "callback_data": "role_student"}]
+        [{"text": "👨‍🏫 Учитель", "callback_data": "role_teacher"}],
+        [{"text": "👨‍👩‍👧‍👦 Родитель", "callback_data": "role_parent"}],
+        [{"text": "👨‍🎓 Ученик", "callback_data": "role_student"}]
     ]
     
-    await message.answer("Please select your role:", reply_markup={"inline_keyboard": keyboard})
+    await message.answer("Пожалуйста, выберите вашу роль:", reply_markup={"inline_keyboard": keyboard})
 
 @router.callback_query(F.data.startswith("role_"))
 async def process_role(callback: CallbackQuery, state: FSMContext):
@@ -119,7 +119,7 @@ async def process_role(callback: CallbackQuery, state: FSMContext):
                 reply_markup=get_role_menu(role)
             )
         else:
-            await callback.message.answer("Sorry, something went wrong. Please try again later.")
+            await callback.message.answer("Извините, что-то пошло не так. Пожалуйста, попробуйте позже.")
     except Exception as e:
         logger.error(f"Error in process_role: {e}")
         await callback.message.answer(str(e))
@@ -143,17 +143,17 @@ async def my_class(callback: CallbackQuery):
                     class_data = class_response.json()
                     students = class_data["students"]
                     
-                    message = f"👥 Class {class_data['name']}\n\nStudents:\n"
+                    message = f"👥 Класс {class_data['name']}\n\nУченики:\n"
                     for student in students:
                         message += f"- {student['name']}\n"
                     
                     await callback.message.answer(message)
                 else:
-                    await callback.message.answer("Failed to get class details.")
+                    await callback.message.answer("Не удалось получить информацию о классе.")
             else:
                 await callback.message.answer(get_role_error_message(role, "my_class"))
         else:
-            await callback.message.answer("Failed to get user data.")
+            await callback.message.answer("Не удалось получить данные пользователя.")
     except Exception as e:
         logger.error(f"Error in my_class: {e}")
         await callback.message.answer(str(e))
@@ -171,16 +171,16 @@ async def my_children(callback: CallbackQuery):
             if role == Roles.parent:
                 children = user_data.get("parent_children", [])
                 if children:
-                    message = "👶 Your Children:\n\n"
+                    message = "👶 Ваши дети:\n\n"
                     for child in children:
                         message += f"- {child['child_name']}\n"
                     await callback.message.answer(message)
                 else:
-                    await callback.message.answer("You don't have any children registered.")
+                    await callback.message.answer("У вас нет зарегистрированных детей.")
             else:
                 await callback.message.answer(get_role_error_message(role, "my_children"))
         else:
-            await callback.message.answer("Failed to get user data.")
+            await callback.message.answer("Не удалось получить данные пользователя.")
     except Exception as e:
         logger.error(f"Error in my_children: {e}")
         await callback.message.answer(str(e))

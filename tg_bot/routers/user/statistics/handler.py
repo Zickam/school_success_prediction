@@ -24,8 +24,8 @@ class StatisticsStates(StatesGroup):
 async def show_statistics_menu(message: Message):
     """Show statistics menu"""
     await message.answer(
-        "📊 Statistics Menu\n\n"
-        "Choose what you want to view:",
+        "📊 Меню статистики\n\n"
+        "Выберите, что вы хотите посмотреть:",
         reply_markup=get_statistics_menu_keyboard()
     )
 
@@ -42,16 +42,16 @@ async def handle_statistics_callback(callback: CallbackQuery, state: FSMContext)
         )
         
         if response and "subjects" in response:
-            text = "📊 Your Overall Statistics:\n\n"
+            text = "📊 Ваша общая статистика:\n\n"
             for subject in response["subjects"]:
                 text += f"📚 {subject['name']}:\n"
-                text += f"   Average: {subject['average']}\n"
-                text += f"   Grades: {subject['count']}\n\n"
-            text += f"📈 Overall Average: {response['overall_average']}"
+                text += f"   Средний балл: {subject['average']}\n"
+                text += f"   Количество оценок: {subject['count']}\n\n"
+            text += f"📈 Общий средний балл: {response['overall_average']}"
             
             await callback.message.edit_text(text)
         else:
-            await callback.message.edit_text("❌ Failed to fetch statistics")
+            await callback.message.edit_text("❌ Не удалось получить статистику")
     
     elif action == "progress":
         # Get list of subjects for the student
@@ -63,11 +63,11 @@ async def handle_statistics_callback(callback: CallbackQuery, state: FSMContext)
         if response:
             await state.set_state(StatisticsStates.selecting_subject)
             await callback.message.edit_text(
-                "Select a subject to view progress:",
+                "Выберите предмет для просмотра прогресса:",
                 reply_markup=get_subject_selection_keyboard(response)
             )
         else:
-            await callback.message.edit_text("❌ Failed to fetch subjects")
+            await callback.message.edit_text("❌ Не удалось получить список предметов")
     
     elif action == "class":
         # Get class statistics
@@ -77,18 +77,18 @@ async def handle_statistics_callback(callback: CallbackQuery, state: FSMContext)
         )
         
         if response and "distribution" in response:
-            text = "📊 Class Statistics:\n\n"
-            text += f"📚 Subject ID: {response['subject_id']}\n"
-            text += f"👥 Total Grades: {response['total_grades']}\n"
-            text += f"📈 Class Average: {response['average']}\n\n"
-            text += "Grade Distribution:\n"
+            text = "📊 Статистика класса:\n\n"
+            text += f"📚 ID предмета: {response['subject_id']}\n"
+            text += f"👥 Всего оценок: {response['total_grades']}\n"
+            text += f"📈 Средний балл класса: {response['average']}\n\n"
+            text += "Распределение оценок:\n"
             
             for grade in response["distribution"]:
-                text += f"Grade {grade['grade']}: {grade['count']} ({grade['percentage']}%)\n"
+                text += f"Оценка {grade['grade']}: {grade['count']} ({grade['percentage']}%)\n"
             
             await callback.message.edit_text(text)
         else:
-            await callback.message.edit_text("❌ Failed to fetch class statistics")
+            await callback.message.edit_text("❌ Не удалось получить статистику класса")
 
 @router.callback_query(StatisticsStates.selecting_subject, F.data.startswith("subject_"))
 async def handle_subject_selection(callback: CallbackQuery, state: FSMContext):
@@ -116,17 +116,17 @@ async def handle_time_period_selection(callback: CallbackQuery, state: FSMContex
     )
     
     if response and "progress" in response:
-        text = f"📈 Progress for the last {days} days:\n\n"
+        text = f"📈 Прогресс за последние {days} дней:\n\n"
         
         for grade in response["progress"]:
             text += f"📅 {grade['date']}\n"
-            text += f"Grade: {grade['value']}\n"
+            text += f"Оценка: {grade['value']}\n"
             if grade['comment']:
-                text += f"Comment: {grade['comment']}\n"
+                text += f"Комментарий: {grade['comment']}\n"
             text += "\n"
         
         await callback.message.edit_text(text)
     else:
-        await callback.message.edit_text("❌ Failed to fetch progress data")
+        await callback.message.edit_text("❌ Не удалось получить данные о прогрессе")
     
     await state.clear() 
