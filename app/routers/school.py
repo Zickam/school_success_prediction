@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from ..db.engine import getSession
-from ..db.declaration import School, Class, Subject, Grade, User
+from ..db.models import School, Class, Subject, Grade, User
 from ..db.schemas.school import (
     SchoolCreate, SchoolUpdate, School as SchoolSchema,
     ClassCreate, ClassUpdate, Class as ClassSchema,
@@ -18,30 +18,58 @@ from ..db.schemas.school import (
 )
 from ..db.schemas.user import User as UserSchema, Roles
 from ..policy import PolicyManager
+from ..auth_dependency import require_auth
 
 router = APIRouter(
     prefix="/schools",
-    tags=["schools"]
+    tags=["schools"],
+    # dependencies=[Depends(require_auth)]
 )
 
 
-@router.post("/", response_model=SchoolSchema)
+@router.post("/", response_model=SchoolSchema, status_code=status.HTTP_201_CREATED)
 async def create_school(
-    school: SchoolCreate,
+    school_data: SchoolCreate,
     session: AsyncSession = Depends(getSession)
 ):
-    db_school = School(**school.model_dump())
-    session.add(db_school)
+    """Create a new school"""
+    # Verify director exists and is a director
+    if school_data.director_uuid:
+        result = await session.execute(
+            select(User).where(
+                User.uuid == school_data.director_uuid,
+                User.role == Roles.director
+            )
+        )
+        director = result.scalar_one_or_none()
+        if not director:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Director not found or not a director"
+            )
+
+    school = School(**school_data.model_dump())
+    session.add(school)
     await session.commit()
-    await session.refresh(db_school)
-    return db_school
+    await session.refresh(school)
+
+    # Set director if provided
+    if school_data.director_uuid:
+        director.managed_school_uuid = school.uuid
+        await session.commit()
+        await session.refresh(director)
+
+    return school
 
 
 @router.get("/", response_model=List[SchoolSchema])
 async def get_schools(
+    skip: int = 0,
+    limit: int = 100,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(select(School))
+    """Get all schools"""
+    result = await session.execute(select(School).offset(skip).limit(limit))
     schools = result.scalars().all()
     return schools
 
@@ -51,31 +79,56 @@ async def get_school(
     school_id: UUID,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(
-        select(School).where(School.uuid == school_id)
-    )
+    """Get a specific school by ID"""
+    result = await session.execute(select(School).where(School.uuid == school_id))
     school = result.scalar_one_or_none()
-    if school is None:
-        raise HTTPException(status_code=404, detail="School not found")
+    if not school:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="School not found"
+        )
     return school
 
 
 @router.put("/{school_id}", response_model=SchoolSchema)
 async def update_school(
     school_id: UUID,
-    school_update: SchoolUpdate,
+    school_data: SchoolUpdate,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(
-        select(School).where(School.uuid == school_id)
-    )
+    """Update a school"""
+    result = await session.execute(select(School).where(School.uuid == school_id))
     school = result.scalar_one_or_none()
-    if school is None:
-        raise HTTPException(status_code=404, detail="School not found")
-    
-    for field, value in school_update.model_dump(exclude_unset=True).items():
-        setattr(school, field, value)
-    
+    if not school:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="School not found"
+        )
+
+    # Verify director if being updated
+    if school_data.director_uuid:
+        result = await session.execute(
+            select(User).where(
+                User.uuid == school_data.director_uuid,
+                User.role == Roles.director
+            )
+        )
+        director = result.scalar_one_or_none()
+        if not director:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Director not found or not a director"
+            )
+
+        # Update director
+        director.managed_school_uuid = school.uuid
+        await session.commit()
+        await session.refresh(director)
+
+    for key, value in school_data.model_dump(exclude_unset=True).items():
+        if key != 'director_uuid':  # Skip this as we handle it separately
+            setattr(school, key, value)
+
     await session.commit()
     await session.refresh(school)
     return school
@@ -86,16 +139,22 @@ async def delete_school(
     school_id: UUID,
     session: AsyncSession = Depends(getSession)
 ):
-    result = await session.execute(
-        select(School).where(School.uuid == school_id)
-    )
+    """Delete a school"""
+    result = await session.execute(select(School).where(School.uuid == school_id))
     school = result.scalar_one_or_none()
-    if school is None:
-        raise HTTPException(status_code=404, detail="School not found")
-    
+    if not school:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="School not found"
+        )
+
+    # Clear director reference
+    if school.director:
+        school.director.managed_school_uuid = None
+        await session.commit()
+
     await session.delete(school)
     await session.commit()
-    return {"message": "School deleted successfully"}
 
 
 @router.post("/classes/", response_model=ClassSchema)

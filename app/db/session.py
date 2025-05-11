@@ -1,13 +1,14 @@
+import os
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
 # Get database URL from environment variable or use default SQLite
-DATABASE_URL = "sqlite+aiosqlite:///./school_success.db"
+# DATABASE_URL = "sqlite+aiosqlite:///./school_success.db"
 
 # Create async engine
 engine = create_async_engine(
-    DATABASE_URL,
+    os.getenv("DB_URL"),
     echo=True,
     future=True,
     connect_args={"check_same_thread": False}  # Needed for SQLite

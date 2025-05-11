@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from ...db.engine import getSession
-from ...db.declaration import Class, User
+from ...db.models import Class, User
 from ...db.schemas.class_ import ClassCreate, ClassUpdate, ClassResponse as ClassSchema
 from ...db.schemas.user import User as UserSchema, Roles
 from ...policy import PolicyManager

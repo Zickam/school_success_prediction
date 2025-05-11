@@ -2,6 +2,8 @@ import pytest
 from uuid import uuid4
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.main import app
 from app.db.models import User, Student, Grade, Attendance, AttendanceStatus
@@ -112,4 +114,78 @@ def test_get_student_statistics_wrong_student(test_db):
     )
     
     assert response.status_code == 403
-    assert response.json()["detail"] == "You can only view your own statistics" 
+    assert response.json()["detail"] == "You can only view your own statistics"
+
+@pytest.fixture
+async def test_user(db: AsyncSession) -> User:
+    """Create a test user"""
+    user = User(
+        name="Test User",
+        role=Roles.student,
+        chat_id=123456789
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+@pytest.fixture
+async def test_attendance(db: AsyncSession, test_user: User) -> Attendance:
+    """Create a test attendance record"""
+    attendance = Attendance(
+        user_uuid=test_user.uuid,
+        date=datetime.utcnow(),
+        status=AttendanceStatus.PRESENT
+    )
+    db.add(attendance)
+    await db.commit()
+    await db.refresh(attendance)
+    return attendance
+
+@pytest.fixture
+async def test_grade(db: AsyncSession, test_user: User) -> Grade:
+    """Create a test grade"""
+    grade = Grade(
+        user_uuid=test_user.uuid,
+        subject_uuid="test-subject-uuid",
+        value=4.5
+    )
+    db.add(grade)
+    await db.commit()
+    await db.refresh(grade)
+    return grade
+
+async def test_get_user_attendance(db: AsyncSession, test_user: User, test_attendance: Attendance):
+    """Test getting user attendance statistics"""
+    from app.routers.statistics import get_user_attendance
+
+    start_date = datetime.utcnow() - timedelta(days=7)
+    end_date = datetime.utcnow()
+
+    result = await get_user_attendance(
+        user_id=str(test_user.uuid),
+        start_date=start_date,
+        end_date=end_date,
+        db=db
+    )
+
+    assert result["total_days"] == 8  # Including both start and end dates
+    assert result["present_count"] == 1
+    assert result["absent_count"] == 0
+    assert result["late_count"] == 0
+    assert result["attendance_rate"] == 12.5  # 1/8 * 100
+
+async def test_get_user_grades(db: AsyncSession, test_user: User, test_grade: Grade):
+    """Test getting user grade statistics"""
+    from app.routers.statistics import get_user_grades
+
+    result = await get_user_grades(
+        user_id=str(test_user.uuid),
+        db=db
+    )
+
+    assert result["total_grades"] == 1
+    assert result["average_grade"] == 4.5
+    assert result["min_grade"] == 4.5
+    assert result["max_grade"] == 4.5
+    assert result["grade_distribution"] == {4.5: 1} 

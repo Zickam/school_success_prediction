@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 async def set_commands(bot: Bot):
     """Set bot commands"""
+
+    return
     commands = [
         BotCommand(command="start", description="Запустить бота"),
         BotCommand(command="help", description="Показать справку"),

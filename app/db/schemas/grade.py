@@ -4,25 +4,32 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 class GradeBase(BaseModel):
-    student_id: int
-    subject_id: int
-    value: float = Field(..., ge=1.0, le=5.0)  # Grade must be between 1 and 5
-    date: datetime
-    comment: Optional[str] = None
+    value: float
+    subject_uuid: UUID
 
 class GradeCreate(GradeBase):
-    pass
+    user_uuid: UUID
 
 class GradeUpdate(BaseModel):
-    student_id: Optional[int] = None
-    subject_id: Optional[int] = None
-    value: Optional[float] = Field(None, ge=1.0, le=5.0)
-    date: Optional[datetime] = None
-    comment: Optional[str] = None
+    value: Optional[float] = None
+    subject_uuid: Optional[UUID] = None
+    user_uuid: Optional[UUID] = None
 
-class GradeResponse(GradeBase):
-    id: int
+class GradeInDB(GradeBase):
     uuid: UUID
+    user_uuid: UUID
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
+class GradeResponse(GradeInDB):
+    subject_name: str
+    user_name: str
+
+    class Config:
+        from_attributes = True
+
+class Grade(GradeInDB):
+    pass 

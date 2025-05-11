@@ -2,7 +2,7 @@ import os
 import logging
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.models import School, Subject, Teacher, Class
+from app.db.models import School, Subject, User, Class
 from app.db.schemas.user import Roles
 
 logger = logging.getLogger(__name__)
@@ -25,8 +25,14 @@ class AutoInitializer:
                 logger.error("Failed to create demo school")
                 return
 
+            # Create demo class first
+            class_ = await self._create_demo_class(school)
+            if not class_:
+                logger.error("Failed to create demo class")
+                return
+
             # Create demo subjects
-            subjects = await self._create_demo_subjects(school)
+            subjects = await self._create_demo_subjects(school, class_)
             if not subjects:
                 logger.error("Failed to create demo subjects")
                 return
@@ -37,11 +43,10 @@ class AutoInitializer:
                 logger.error("Failed to create demo teachers")
                 return
 
-            # Create demo class
-            class_ = await self._create_demo_class(school, teachers)
-            if not class_:
-                logger.error("Failed to create demo class")
-                return
+            # Set homeroom teacher for the class
+            teachers[0].managed_class_uuid = class_.uuid
+            await self.session.commit()
+            await self.session.refresh(teachers[0])
 
             logger.info("Auto-initialization completed successfully")
         except Exception as e:
@@ -66,15 +71,32 @@ class AutoInitializer:
             await self.session.rollback()
             return None
 
-    async def _create_demo_subjects(self, school: School) -> Optional[list[Subject]]:
+    async def _create_demo_class(self, school: School) -> Optional[Class]:
+        """Create demo class"""
+        try:
+            class_ = Class(
+                name="9A",
+                school_uuid=school.uuid,
+                start_year=2024
+            )
+            self.session.add(class_)
+            await self.session.commit()
+            await self.session.refresh(class_)
+            return class_
+        except Exception as e:
+            logger.error(f"Error creating demo class: {e}")
+            await self.session.rollback()
+            return None
+
+    async def _create_demo_subjects(self, school: School, class_: Class) -> Optional[list[Subject]]:
         """Create demo subjects"""
         try:
             subjects = [
-                Subject(name="Mathematics", school_id=school.id),
-                Subject(name="Physics", school_id=school.id),
-                Subject(name="Chemistry", school_id=school.id),
-                Subject(name="Biology", school_id=school.id),
-                Subject(name="English", school_id=school.id)
+                Subject(name="Mathematics", school_uuid=school.uuid, class_uuid=class_.uuid),
+                Subject(name="Physics", school_uuid=school.uuid, class_uuid=class_.uuid),
+                Subject(name="Chemistry", school_uuid=school.uuid, class_uuid=class_.uuid),
+                Subject(name="Biology", school_uuid=school.uuid, class_uuid=class_.uuid),
+                Subject(name="English", school_uuid=school.uuid, class_uuid=class_.uuid)
             ]
             for subject in subjects:
                 self.session.add(subject)
@@ -87,26 +109,26 @@ class AutoInitializer:
             await self.session.rollback()
             return None
 
-    async def _create_demo_teachers(self, school: School, subjects: list[Subject]) -> Optional[list[Teacher]]:
+    async def _create_demo_teachers(self, school: School, subjects: list[Subject]) -> Optional[list[User]]:
         """Create demo teachers"""
         try:
             teachers = [
-                Teacher(
+                User(
                     name="John Doe",
                     role=Roles.homeroom_teacher,
-                    school_id=school.id,
+                    school_uuid=school.uuid,
                     subjects=[subjects[0], subjects[1]]  # Math and Physics
                 ),
-                Teacher(
+                User(
                     name="Jane Smith",
                     role=Roles.subject_teacher,
-                    school_id=school.id,
+                    school_uuid=school.uuid,
                     subjects=[subjects[2], subjects[3]]  # Chemistry and Biology
                 ),
-                Teacher(
+                User(
                     name="Bob Johnson",
                     role=Roles.subject_teacher,
-                    school_id=school.id,
+                    school_uuid=school.uuid,
                     subjects=[subjects[4]]  # English
                 )
             ]
@@ -118,22 +140,5 @@ class AutoInitializer:
             return teachers
         except Exception as e:
             logger.error(f"Error creating demo teachers: {e}")
-            await self.session.rollback()
-            return None
-
-    async def _create_demo_class(self, school: School, teachers: list[Teacher]) -> Optional[Class]:
-        """Create demo class"""
-        try:
-            class_ = Class(
-                name="9A",
-                school_id=school.id,
-                homeroom_teacher_id=teachers[0].id
-            )
-            self.session.add(class_)
-            await self.session.commit()
-            await self.session.refresh(class_)
-            return class_
-        except Exception as e:
-            logger.error(f"Error creating demo class: {e}")
             await self.session.rollback()
             return None 

@@ -1,72 +1,80 @@
-from aiogram import Router, F
-from aiogram.types import Message
+from aiogram import Router, types
 from aiogram.filters import Command
-
-from tg_bot.filters import IsPrivate
-from tg_bot.api_client import make_api_request
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from tg_bot.core.config import settings
+import aiohttp
 
 router = Router()
-router.message.filter(IsPrivate())
+
+class GradeStates(StatesGroup):
+    waiting_for_grade = State()
+    waiting_for_subject = State()
 
 @router.message(Command("grades"))
-async def show_grades_statistics(message: Message):
-    """Show grade statistics"""
-    # Get all grades for statistics
-    response = await make_api_request(
-        "GET",
-        f"/grades",
-        params={"student_id": message.from_user.id}
-    )
-    
-    if response:
-        # Count grades
-        grade_counts = {}
-        for grade in response:
-            value = grade['value']
-            grade_counts[value] = grade_counts.get(value, 0) + 1
-        
-        # Get attendance data
-        attendance_response = await make_api_request(
-            "GET",
-            f"/attendance",
-            params={"student_id": message.from_user.id}
-        )
-        
-        attendance_stats = {
-            "present": 0,
-            "absent": 0,
-            "late": 0
-        }
-        
-        if attendance_response:
-            for record in attendance_response:
-                status = record['status']
-                attendance_stats[status] = attendance_stats.get(status, 0) + 1
-        
-        # Format statistics message
-        text = "📊 Ваша статистика:\n\n"
-        
-        # Grade distribution
-        for grade in sorted(grade_counts.keys(), reverse=True):
-            text += f"Оценка {grade}: {grade_counts[grade]} раз\n"
-        
-        # Calculate average
-        if grade_counts:
-            total = sum(grade * count for grade, count in grade_counts.items())
-            count = sum(grade_counts.values())
-            average = total / count
-            text += f"\nСредний балл: {average:.2f}\n"
-        
-        # Attendance statistics
-        text += f"\nПропущено дней: {attendance_stats['absent']}\n"
-        text += f"Опозданий: {attendance_stats['late']}\n"
-        
-        # Calculate attendance rate
-        total_days = sum(attendance_stats.values())
-        if total_days > 0:
-            attendance_rate = (attendance_stats['present'] / total_days) * 100
-            text += f"Процент посещаемости: {attendance_rate:.1f}%"
-        
-        await message.answer(text)
-    else:
-        await message.answer("❌ Не удалось получить оценки") 
+async def get_grades(message: types.Message):
+    """Get user's grades"""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            f"{settings.API_URL}/grades",
+            params={"user_uuid": message.from_user.id}
+        ) as response:
+            if response.status == 200:
+                grades = await response.json()
+                if not grades:
+                    await message.answer("У вас пока нет оценок.")
+                    return
+
+                # Format grades
+                grade_text = "Ваши оценки:\n\n"
+                for grade in grades:
+                    grade_text += f"Предмет: {grade['subject_name']}\n"
+                    grade_text += f"Оценка: {grade['value']}\n"
+                    grade_text += f"Дата: {grade['created_at']}\n\n"
+
+                await message.answer(grade_text)
+            else:
+                await message.answer("Не удалось получить оценки. Попробуйте позже.")
+
+@router.message(Command("add_grade"))
+async def add_grade_start(message: types.Message, state: FSMContext):
+    """Start adding a new grade"""
+    await state.set_state(GradeStates.waiting_for_subject)
+    await message.answer("Введите название предмета:")
+
+@router.message(GradeStates.waiting_for_subject)
+async def process_subject(message: types.Message, state: FSMContext):
+    """Process subject name and ask for grade"""
+    await state.update_data(subject=message.text)
+    await state.set_state(GradeStates.waiting_for_grade)
+    await message.answer("Введите оценку (от 1 до 5):")
+
+@router.message(GradeStates.waiting_for_grade)
+async def process_grade(message: types.Message, state: FSMContext):
+    """Process grade value and save it"""
+    try:
+        grade = float(message.text)
+        if not 1 <= grade <= 5:
+            await message.answer("Оценка должна быть от 1 до 5. Попробуйте снова:")
+            return
+
+        data = await state.get_data()
+        subject = data["subject"]
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{settings.API_URL}/grades",
+                json={
+                    "user_uuid": message.from_user.id,
+                    "subject": subject,
+                    "value": grade
+                }
+            ) as response:
+                if response.status == 201:
+                    await message.answer("Оценка успешно добавлена!")
+                else:
+                    await message.answer("Не удалось добавить оценку. Попробуйте позже.")
+
+        await state.clear()
+    except ValueError:
+        await message.answer("Пожалуйста, введите число от 1 до 5:") 

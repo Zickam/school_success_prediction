@@ -11,7 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session, Base, engine
-from app.routers import api_router, webhook_router
 from tg_bot.setup.auto_init import AutoInitializer
 
 # Configure logging
@@ -31,6 +30,16 @@ async def lifespan(app: FastAPI):
     async with session as db:
         initializer = AutoInitializer(db)
         await initializer.initialize()
+
+    # from app.routers import auth
+    # app.include_router(auth.router)
+
+    from app.routers import api_router, webhook_router
+    app.include_router(api_router)
+
+    # Include webhook router without prefix (it already has one)
+    app.include_router(webhook_router)
+
     yield
 
 app = FastAPI(
@@ -39,6 +48,7 @@ app = FastAPI(
     description="API for managing schools, classes, subjects, and grades with ML-powered predictions",
     version="1.0.0"
 )
+
 
 # Configure CORS
 app.add_middleware(
@@ -56,7 +66,3 @@ async def health_check():
     return {"status": "healthy"}
 
 # Include authenticated router
-app.include_router(api_router)
-
-# Include webhook router without prefix (it already has one)
-app.include_router(webhook_router)

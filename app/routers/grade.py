@@ -1,36 +1,29 @@
-from typing import List, Optional
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from uuid import UUID
 
 from app.db.engine import getSession
-from app.db.declaration import Grade, User, Subject
+from app.db.models import Grade, User, Subject
 from app.db.schemas.grade import GradeCreate, GradeUpdate, GradeResponse
+from app.db.schemas.user import Roles
 from app.auth_dependency import require_auth
 
 router = APIRouter(
     prefix="/grades",
     tags=["grades"],
-    dependencies=[Depends(require_auth)]
+    # dependencies=[Depends(require_auth)]
 )
 
 @router.get("/", response_model=List[GradeResponse])
 async def get_grades(
     skip: int = 0,
     limit: int = 100,
-    student_id: Optional[int] = None,
-    subject_id: Optional[int] = None,
     session: AsyncSession = Depends(getSession)
 ):
-    """Get all grades with optional filtering"""
-    query = select(Grade)
-    
-    if student_id:
-        query = query.where(Grade.student_id == student_id)
-    if subject_id:
-        query = query.where(Grade.subject_id == subject_id)
-    
-    result = await session.execute(query.offset(skip).limit(limit))
+    """Get all grades"""
+    result = await session.execute(select(Grade).offset(skip).limit(limit))
     grades = result.scalars().all()
     return grades
 
@@ -40,11 +33,11 @@ async def create_grade(
     session: AsyncSession = Depends(getSession)
 ):
     """Create a new grade"""
-    # Verify student exists
+    # Verify student exists and is a student
     result = await session.execute(
         select(User).where(
-            User.id == grade_data.student_id,
-            User.role == "student"
+            User.uuid == grade_data.user_uuid,
+            User.role == Roles.student
         )
     )
     student = result.scalar_one_or_none()
@@ -56,7 +49,7 @@ async def create_grade(
 
     # Verify subject exists
     result = await session.execute(
-        select(Subject).where(Subject.id == grade_data.subject_id)
+        select(Subject).where(Subject.uuid == grade_data.subject_uuid)
     )
     subject = result.scalar_one_or_none()
     if not subject:
@@ -73,11 +66,11 @@ async def create_grade(
 
 @router.get("/{grade_id}", response_model=GradeResponse)
 async def get_grade(
-    grade_id: int,
+    grade_id: UUID,
     session: AsyncSession = Depends(getSession)
 ):
     """Get a specific grade by ID"""
-    result = await session.execute(select(Grade).where(Grade.id == grade_id))
+    result = await session.execute(select(Grade).where(Grade.uuid == grade_id))
     grade = result.scalar_one_or_none()
     if not grade:
         raise HTTPException(
@@ -88,12 +81,12 @@ async def get_grade(
 
 @router.put("/{grade_id}", response_model=GradeResponse)
 async def update_grade(
-    grade_id: int,
+    grade_id: UUID,
     grade_data: GradeUpdate,
     session: AsyncSession = Depends(getSession)
 ):
     """Update a grade"""
-    result = await session.execute(select(Grade).where(Grade.id == grade_id))
+    result = await session.execute(select(Grade).where(Grade.uuid == grade_id))
     grade = result.scalar_one_or_none()
     if not grade:
         raise HTTPException(
@@ -102,11 +95,11 @@ async def update_grade(
         )
 
     # Verify student if being updated
-    if grade_data.student_id:
+    if grade_data.user_uuid:
         result = await session.execute(
             select(User).where(
-                User.id == grade_data.student_id,
-                User.role == "student"
+                User.uuid == grade_data.user_uuid,
+                User.role == Roles.student
             )
         )
         student = result.scalar_one_or_none()
@@ -117,9 +110,9 @@ async def update_grade(
             )
 
     # Verify subject if being updated
-    if grade_data.subject_id:
+    if grade_data.subject_uuid:
         result = await session.execute(
-            select(Subject).where(Subject.id == grade_data.subject_id)
+            select(Subject).where(Subject.uuid == grade_data.subject_uuid)
         )
         subject = result.scalar_one_or_none()
         if not subject:
@@ -137,11 +130,11 @@ async def update_grade(
 
 @router.delete("/{grade_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_grade(
-    grade_id: int,
+    grade_id: UUID,
     session: AsyncSession = Depends(getSession)
 ):
     """Delete a grade"""
-    result = await session.execute(select(Grade).where(Grade.id == grade_id))
+    result = await session.execute(select(Grade).where(Grade.uuid == grade_id))
     grade = result.scalar_one_or_none()
     if not grade:
         raise HTTPException(

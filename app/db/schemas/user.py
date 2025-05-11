@@ -57,6 +57,7 @@ class UserRead(BaseModel):
         from_attributes = True
 
 
+# Base schema for user data
 class UserBase(BaseModel):
     chat_id: int
     name: str
@@ -65,10 +66,12 @@ class UserBase(BaseModel):
     parent_children: List[ParentChild] | None = None
 
 
+# Schema for creating a new user
 class UserCreate(UserBase):
     pass
 
 
+# Schema for updating an existing user
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     role: Optional[Roles] = None
@@ -77,6 +80,7 @@ class UserUpdate(BaseModel):
     parent_children: Optional[List[UUID]] = None
 
 
+# Schema for user data in database
 class UserInDB(UserBase):
     uuid: UUID
     created_at: datetime
@@ -86,5 +90,10 @@ class UserInDB(UserBase):
         from_attributes = True
 
 
-class User(UserInDB):
+# Schema for user response
+class UserResponse(UserInDB):
     pass
+
+
+# Alias for backward compatibility
+User = UserResponse

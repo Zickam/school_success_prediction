@@ -5,3 +5,4 @@ yarl
 redis
 nest-asyncio
 pydantic
+pydantic-settings
