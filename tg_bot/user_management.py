@@ -9,34 +9,29 @@ from aiogram.utils.keyboard import InlineKeyboardMarkup
 
 from app.db.schemas.user import Roles, UserCreate
 
+
 async def getFSMContext(user_id: int) -> FSMContext:
     from tg_bot.config import dp, bot
 
     return FSMContext(
-        storage=dp.storage,  # dp - экземпляр диспатчера
+        storage=dp.storage,
         key=StorageKey(
-            chat_id=user_id,  # если юзер в ЛС, то chat_id=user_id
+            chat_id=user_id,
             user_id=user_id,
             bot_id=bot.id,
         ),
     )
 
+
 async def updateNewUser(msg: Message):
     from tg_bot.config import httpx_client
 
-    # Create user data
     user_data = UserCreate(
-        name=msg.from_user.full_name,
-        chat_id=msg.chat.id,
-        role=Roles.student
+        name=msg.from_user.full_name, chat_id=msg.chat.id, role=Roles.student
     )
 
-    # Send POST request with user data in body
-    resp = await httpx_client.post(
-        "user",
-        json=user_data.model_dump()
-    )
-    
+    resp = await httpx_client.post("user", json=user_data.model_dump())
+
     if resp.status_code != 200:
         logging.error(f"Failed to create user: {resp.text}")
         raise Exception("Failed to create user")
@@ -48,10 +43,7 @@ async def updateNewUser(msg: Message):
 async def updateExistingUser(msg: Message):
     from tg_bot.config import httpx_client
 
-    resp = await httpx_client.get(
-        "user",
-        params={"chat_id": msg.chat.id}
-    )
+    resp = await httpx_client.get("user", params={"chat_id": msg.chat.id})
 
     if resp.status_code != 200:
         logging.error(f"Failed to get user: {resp.text}")

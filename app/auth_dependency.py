@@ -5,11 +5,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
 
-# JWT secret key & settings
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = "HS256"
 
-# Create FastAPI app with global dependency
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 

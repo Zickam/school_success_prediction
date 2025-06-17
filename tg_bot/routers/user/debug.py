@@ -21,4 +21,3 @@ async def unexpectedMsg(msg: Message, state: FSMContext):
 async def unexpectedCallback(call: CallbackQuery, state: FSMContext):
     logging.info(call)
     await call.message.answer(f"[DEBUG] Unexpected callback: {call.data}")
-

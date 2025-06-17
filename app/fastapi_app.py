@@ -13,44 +13,39 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_session, Base, engine
 from tg_bot.setup.auto_init import AutoInitializer
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan context manager for database models and demo data initialization"""
-    # Initialize database models
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database models initialized")
 
-    # Initialize demo data
     session = await get_session()
     async with session as db:
         initializer = AutoInitializer(db)
         await initializer.initialize()
 
-    # from app.routers import auth
-    # app.include_router(auth.router)
-
     from app.routers import api_router, webhook_router
+
     app.include_router(api_router)
 
-    # Include webhook router without prefix (it already has one)
     app.include_router(webhook_router)
 
     yield
+
 
 app = FastAPI(
     lifespan=lifespan,
     title="School Success Prediction API",
     description="API for managing schools, classes, subjects, and grades with ML-powered predictions",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -59,10 +54,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Health check endpoint
+
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy"}
 
-# Include authenticated router
+    return {"status": "healthy"}

@@ -13,49 +13,43 @@ from app.auth_dependency import require_auth
 router = APIRouter(
     prefix="/grades",
     tags=["grades"],
-    # dependencies=[Depends(require_auth)]
 )
+
 
 @router.get("/", response_model=List[GradeResponse])
 async def get_grades(
-    skip: int = 0,
-    limit: int = 100,
-    session: AsyncSession = Depends(getSession)
+    skip: int = 0, limit: int = 100, session: AsyncSession = Depends(getSession)
 ):
-    """Get all grades"""
+
     result = await session.execute(select(Grade).offset(skip).limit(limit))
     grades = result.scalars().all()
     return grades
 
+
 @router.post("/", response_model=GradeResponse, status_code=status.HTTP_201_CREATED)
 async def create_grade(
-    grade_data: GradeCreate,
-    session: AsyncSession = Depends(getSession)
+    grade_data: GradeCreate, session: AsyncSession = Depends(getSession)
 ):
-    """Create a new grade"""
-    # Verify student exists and is a student
+
     result = await session.execute(
         select(User).where(
-            User.uuid == grade_data.user_uuid,
-            User.role == Roles.student
+            User.uuid == grade_data.user_uuid, User.role == Roles.student
         )
     )
     student = result.scalar_one_or_none()
     if not student:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Student not found or not a student"
+            detail="Student not found or not a student",
         )
 
-    # Verify subject exists
     result = await session.execute(
         select(Subject).where(Subject.uuid == grade_data.subject_uuid)
     )
     subject = result.scalar_one_or_none()
     if not subject:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Subject not found"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Subject not found"
         )
 
     grade = Grade(**grade_data.model_dump())
@@ -64,52 +58,44 @@ async def create_grade(
     await session.refresh(grade)
     return grade
 
+
 @router.get("/{grade_id}", response_model=GradeResponse)
-async def get_grade(
-    grade_id: UUID,
-    session: AsyncSession = Depends(getSession)
-):
-    """Get a specific grade by ID"""
+async def get_grade(grade_id: UUID, session: AsyncSession = Depends(getSession)):
+
     result = await session.execute(select(Grade).where(Grade.uuid == grade_id))
     grade = result.scalar_one_or_none()
     if not grade:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Grade not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Grade not found"
         )
     return grade
 
+
 @router.put("/{grade_id}", response_model=GradeResponse)
 async def update_grade(
-    grade_id: UUID,
-    grade_data: GradeUpdate,
-    session: AsyncSession = Depends(getSession)
+    grade_id: UUID, grade_data: GradeUpdate, session: AsyncSession = Depends(getSession)
 ):
-    """Update a grade"""
+
     result = await session.execute(select(Grade).where(Grade.uuid == grade_id))
     grade = result.scalar_one_or_none()
     if not grade:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Grade not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Grade not found"
         )
 
-    # Verify student if being updated
     if grade_data.user_uuid:
         result = await session.execute(
             select(User).where(
-                User.uuid == grade_data.user_uuid,
-                User.role == Roles.student
+                User.uuid == grade_data.user_uuid, User.role == Roles.student
             )
         )
         student = result.scalar_one_or_none()
         if not student:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Student not found or not a student"
+                detail="Student not found or not a student",
             )
 
-    # Verify subject if being updated
     if grade_data.subject_uuid:
         result = await session.execute(
             select(Subject).where(Subject.uuid == grade_data.subject_uuid)
@@ -117,8 +103,7 @@ async def update_grade(
         subject = result.scalar_one_or_none()
         if not subject:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Subject not found"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Subject not found"
             )
 
     for key, value in grade_data.model_dump(exclude_unset=True).items():
@@ -128,19 +113,16 @@ async def update_grade(
     await session.refresh(grade)
     return grade
 
+
 @router.delete("/{grade_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_grade(
-    grade_id: UUID,
-    session: AsyncSession = Depends(getSession)
-):
-    """Delete a grade"""
+async def delete_grade(grade_id: UUID, session: AsyncSession = Depends(getSession)):
+
     result = await session.execute(select(Grade).where(Grade.uuid == grade_id))
     grade = result.scalar_one_or_none()
     if not grade:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Grade not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Grade not found"
         )
 
     await session.delete(grade)
-    await session.commit() 
+    await session.commit()

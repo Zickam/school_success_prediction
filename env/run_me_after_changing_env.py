@@ -44,7 +44,7 @@ class Manager:
                     file.write("\n")
 
     def isDotEnvFull(self, other_dotenv: Path) -> tuple[bool, set[str]]:
-        """returns the status and the missing values set"""
+
 
         _, other_dotenv_variables = self.readDotEnv(other_dotenv)
 
@@ -58,19 +58,15 @@ class Manager:
             return (
                 False,
                 missing_variables_in_dotenv,
-            )  # False because dotenv is not full
+            )
         else:
             return True, missing_variables_in_dotenv
 
 
 if __name__ == "__main__":
-    # os.chdir("/")
     print(os.listdir("./"))
     print(os.getcwd())
 
-    # manager = Manager(Path(".env"))
-    # manager.generateClearedDotEnv(Path("example.env"))
-    # print(manager.isDotEnvFull(Path("example.env")))
 
     os.system("mkdir example")
 

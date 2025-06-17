@@ -9,8 +9,9 @@ engine = create_engine(os.getenv("DB_URL"), echo=True)
 
 Base = declarative_base()
 
+
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(sa.Uuid, primary_key=True)
     first_name = Column(String)
@@ -18,8 +19,9 @@ class User(Base):
     def __repr__(self):
         return f"<User(id={self.id}, name={self.name})>"
 
+
 class Class(Base):
-    """all classes of all time stored here"""
+
     __tablename__ = "classes"
 
     id = Column(sa.Uuid, primary_key=True)
@@ -27,14 +29,10 @@ class Class(Base):
     start_year = Column(sa.Date)
 
 
-
 class UserClass(Base):
     __tablename__ = "user_classes"
 
-    users = relationship('User', secondary='project_users', back_populates='projects')
-
-
-
+    users = relationship("User", secondary="project_users", back_populates="projects")
 
 
 print(users)

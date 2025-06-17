@@ -8,7 +8,7 @@ from app.utility import AutoNameEnum, auto
 
 
 class Roles(str, Enum):
-    """User roles"""
+
     principal = "principal"
     deputy_principal = "deputy_principal"
     homeroom_teacher = "homeroom_teacher"
@@ -18,19 +18,19 @@ class Roles(str, Enum):
 
     @classmethod
     def get_hierarchy_level(cls, role: "Roles") -> int:
-        """Returns the hierarchy level of a role (higher number = more permissions)"""
+
         hierarchy = {
             cls.student: 0,
             cls.parent: 1,
             cls.subject_teacher: 2,
             cls.homeroom_teacher: 3,
             cls.deputy_principal: 4,
-            cls.principal: 5
+            cls.principal: 5,
         }
         return hierarchy[role]
 
     def can_manage(self, other_role: "Roles") -> bool:
-        """Checks if this role can manage the other role"""
+
         return self.get_hierarchy_level(self) > self.get_hierarchy_level(other_role)
 
 
@@ -44,7 +44,6 @@ class ParentChild(BaseModel):
     child_name: str
 
 
-# For reading
 class UserRead(BaseModel):
     uuid: UUID
     role: Roles
@@ -57,7 +56,6 @@ class UserRead(BaseModel):
         from_attributes = True
 
 
-# Base schema for user data
 class UserBase(BaseModel):
     chat_id: int
     name: str
@@ -66,12 +64,10 @@ class UserBase(BaseModel):
     parent_children: List[ParentChild] | None = None
 
 
-# Schema for creating a new user
 class UserCreate(UserBase):
     pass
 
 
-# Schema for updating an existing user
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     role: Optional[Roles] = None
@@ -80,7 +76,6 @@ class UserUpdate(BaseModel):
     parent_children: Optional[List[UUID]] = None
 
 
-# Schema for user data in database
 class UserInDB(UserBase):
     uuid: UUID
     created_at: datetime
@@ -90,10 +85,8 @@ class UserInDB(UserBase):
         from_attributes = True
 
 
-# Schema for user response
 class UserResponse(UserInDB):
     pass
 
 
-# Alias for backward compatibility
 User = UserResponse

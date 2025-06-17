@@ -10,7 +10,6 @@ from .webhook import webhook_router
 
 api_router = APIRouter()
 
-# Include all routers without redundant prefixes (routers have their own prefixes)
 api_router.include_router(user_router, tags=["users"])
 api_router.include_router(school_router, tags=["schools"])
 api_router.include_router(class_router, tags=["classes"])
@@ -20,13 +19,13 @@ api_router.include_router(statistics_router, tags=["statistics"])
 api_router.include_router(ml_router, tags=["ml"])
 
 __all__ = [
-    'api_router',
-    'user_router',
-    'school_router',
-    'class_router',
-    'subject_router',
-    'grade_router',
-    'statistics_router',
-    'ml_router',
-    'webhook_router',
+    "api_router",
+    "user_router",
+    "school_router",
+    "class_router",
+    "subject_router",
+    "grade_router",
+    "statistics_router",
+    "ml_router",
+    "webhook_router",
 ]

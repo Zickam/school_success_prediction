@@ -3,17 +3,21 @@ from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, Field
 
+
 class GradeBase(BaseModel):
     value: float
     subject_uuid: UUID
 
+
 class GradeCreate(GradeBase):
     user_uuid: UUID
+
 
 class GradeUpdate(BaseModel):
     value: Optional[float] = None
     subject_uuid: Optional[UUID] = None
     user_uuid: Optional[UUID] = None
+
 
 class GradeInDB(GradeBase):
     uuid: UUID
@@ -24,6 +28,7 @@ class GradeInDB(GradeBase):
     class Config:
         from_attributes = True
 
+
 class GradeResponse(GradeInDB):
     subject_name: str
     user_name: str
@@ -31,5 +36,6 @@ class GradeResponse(GradeInDB):
     class Config:
         from_attributes = True
 
+
 class Grade(GradeInDB):
-    pass 
+    pass
