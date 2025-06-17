@@ -5,6 +5,7 @@
 
 /logs/*.log
 /logs/*.gz
+/logs/*
 
 /env/*.env
 !/env/example/
