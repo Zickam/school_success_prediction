@@ -1,0 +1,184 @@
+2025-05-28 20:06:32,162 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-28 20:06:32,164 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("teacher_subject")
+2025-05-28 20:06:32,164 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-28 20:06:32,166 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("parent_child")
+2025-05-28 20:06:32,166 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-28 20:06:32,167 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("user_class")
+2025-05-28 20:06:32,168 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-28 20:06:32,169 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("user")
+2025-05-28 20:06:32,169 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-28 20:06:32,170 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("school")
+2025-05-28 20:06:32,171 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-28 20:06:32,172 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("subject")
+2025-05-28 20:06:32,172 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-28 20:06:32,174 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("class")
+2025-05-28 20:06:32,174 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-28 20:06:32,175 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("grade")
+2025-05-28 20:06:32,175 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-28 20:06:32,176 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("attendance")
+2025-05-28 20:06:32,177 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-28 20:06:32,178 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-28 20:06:32,179 - fastapi_app - INFO - Database models initialized
+2025-05-28 20:06:32,180 - tg_bot.setup.auto_init - INFO - Starting auto-initialization
+2025-05-28 20:06:32,219 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-28 20:06:32,221 - sqlalchemy.engine.Engine - INFO - INSERT INTO school (uuid, name, address, phone, email, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+2025-05-28 20:06:32,221 - sqlalchemy.engine.Engine - INFO - [generated in 0.00050s] ('bbf9ad1adfcb4f2b91cb3a5a7d6b822a', 'Demo School', '123 Demo Street', '+1234567890', 'demo@school.com', '2025-05-28 20:06:32.221379', '2025-05-28 20:06:32.221384')
+2025-05-28 20:06:32,223 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-28 20:06:32,228 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-28 20:06:32,231 - sqlalchemy.engine.Engine - INFO - SELECT school.uuid, school.name, school.address, school.phone, school.email, school.created_at, school.updated_at 
+FROM school 
+WHERE school.uuid = ?
+2025-05-28 20:06:32,231 - sqlalchemy.engine.Engine - INFO - [generated in 0.00040s] ('bbf9ad1adfcb4f2b91cb3a5a7d6b822a',)
+2025-05-28 20:06:32,234 - sqlalchemy.engine.Engine - INFO - INSERT INTO class (uuid, name, start_year, school_uuid, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+2025-05-28 20:06:32,234 - sqlalchemy.engine.Engine - INFO - [generated in 0.00047s] ('847645a2daea433195c146e09dcc41f1', '9A', 2024, 'bbf9ad1adfcb4f2b91cb3a5a7d6b822a', '2025-05-28 20:06:32.234274', '2025-05-28 20:06:32.234279')
+2025-05-28 20:06:32,236 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-28 20:06:32,242 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-28 20:06:32,244 - sqlalchemy.engine.Engine - INFO - SELECT class.uuid, class.name, class.start_year, class.school_uuid, class.created_at, class.updated_at 
+FROM class 
+WHERE class.uuid = ?
+2025-05-28 20:06:32,244 - sqlalchemy.engine.Engine - INFO - [generated in 0.00042s] ('847645a2daea433195c146e09dcc41f1',)
+2025-05-28 20:06:32,248 - sqlalchemy.engine.Engine - INFO - INSERT INTO subject (uuid, name, school_uuid, class_uuid, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?)
+2025-05-28 20:06:32,248 - sqlalchemy.engine.Engine - INFO - [generated in 0.00037s (insertmanyvalues) 1/1 (unordered)] ('cc392d6aaf49407fa396fe720a60db9b', 'Mathematics', 'bbf9ad1adfcb4f2b91cb3a5a7d6b822a', '847645a2daea433195c146e09dcc41f1', '2025-05-28 20:06:32.248160', '2025-05-28 20:06:32.248167', '7087ea4a354d4c439e2568fc9bfd27a7', 'Physics', 'bbf9ad1adfcb4f2b91cb3a5a7d6b822a', '847645a2daea433195c146e09dcc41f1', '2025-05-28 20:06:32.248177', '2025-05-28 20:06:32.248180', '944b66d3811648c7a5a621fdf9dfa072', 'Chemistry', 'bbf9ad1adfcb4f2b91cb3a5a7d6b822a', '847645a2daea433195c146e09dcc41f1', '2025-05-28 20:06:32.248189', '2025-05-28 20:06:32.248192', '08bed5cb877c4f6f80f43f19718a3e3d', 'Biology', 'bbf9ad1adfcb4f2b91cb3a5a7d6b822a', '847645a2daea433195c146e09dcc41f1', '2025-05-28 20:06:32.248200', '2025-05-28 20:06:32.248204', '7b29e7faaeb646998439110ba6075f87', 'English', 'bbf9ad1adfcb4f2b91cb3a5a7d6b822a', '847645a2daea433195c146e09dcc41f1', '2025-05-28 20:06:32.248212', '2025-05-28 20:06:32.248215')
+2025-05-28 20:06:32,251 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-28 20:06:32,255 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-28 20:06:32,257 - sqlalchemy.engine.Engine - INFO - SELECT subject.uuid, subject.name, subject.school_uuid, subject.class_uuid, subject.created_at, subject.updated_at 
+FROM subject 
+WHERE subject.uuid = ?
+2025-05-28 20:06:32,257 - sqlalchemy.engine.Engine - INFO - [generated in 0.00044s] ('cc392d6aaf49407fa396fe720a60db9b',)
+2025-05-28 20:06:32,259 - sqlalchemy.engine.Engine - INFO - SELECT subject.uuid, subject.name, subject.school_uuid, subject.class_uuid, subject.created_at, subject.updated_at 
+FROM subject 
+WHERE subject.uuid = ?
+2025-05-28 20:06:32,260 - sqlalchemy.engine.Engine - INFO - [cached since 0.002936s ago] ('7087ea4a354d4c439e2568fc9bfd27a7',)
+2025-05-28 20:06:32,261 - sqlalchemy.engine.Engine - INFO - SELECT subject.uuid, subject.name, subject.school_uuid, subject.class_uuid, subject.created_at, subject.updated_at 
+FROM subject 
+WHERE subject.uuid = ?
+2025-05-28 20:06:32,262 - sqlalchemy.engine.Engine - INFO - [cached since 0.005143s ago] ('944b66d3811648c7a5a621fdf9dfa072',)
+2025-05-28 20:06:32,264 - sqlalchemy.engine.Engine - INFO - SELECT subject.uuid, subject.name, subject.school_uuid, subject.class_uuid, subject.created_at, subject.updated_at 
+FROM subject 
+WHERE subject.uuid = ?
+2025-05-28 20:06:32,264 - sqlalchemy.engine.Engine - INFO - [cached since 0.007253s ago] ('08bed5cb877c4f6f80f43f19718a3e3d',)
+2025-05-28 20:06:32,266 - sqlalchemy.engine.Engine - INFO - SELECT subject.uuid, subject.name, subject.school_uuid, subject.class_uuid, subject.created_at, subject.updated_at 
+FROM subject 
+WHERE subject.uuid = ?
+2025-05-28 20:06:32,266 - sqlalchemy.engine.Engine - INFO - [cached since 0.009595s ago] ('7b29e7faaeb646998439110ba6075f87',)
+2025-05-28 20:06:32,270 - sqlalchemy.engine.Engine - INFO - INSERT INTO user (uuid, chat_id, name, role, managed_class_uuid, school_uuid, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?)
+2025-05-28 20:06:32,270 - sqlalchemy.engine.Engine - INFO - [generated in 0.00030s (insertmanyvalues) 1/1 (unordered)] ('d15bac9288ac45e8bae32cac734c02ea', None, 'John Doe', 'homeroom_teacher', None, 'bbf9ad1adfcb4f2b91cb3a5a7d6b822a', '2025-05-28 20:06:32.269975', '2025-05-28 20:06:32.269980', 'abd5cb4b5d994bdfa0def38930aef940', None, 'Jane Smith', 'subject_teacher', None, 'bbf9ad1adfcb4f2b91cb3a5a7d6b822a', '2025-05-28 20:06:32.269988', '2025-05-28 20:06:32.269990', '19c91baa8e464231a120a0b5b306933b', None, 'Bob Johnson', 'subject_teacher', None, 'bbf9ad1adfcb4f2b91cb3a5a7d6b822a', '2025-05-28 20:06:32.269997', '2025-05-28 20:06:32.270000')
+2025-05-28 20:06:32,272 - sqlalchemy.engine.Engine - INFO - INSERT INTO teacher_subject (teacher_uuid, subject_uuid) VALUES (?, ?)
+2025-05-28 20:06:32,273 - sqlalchemy.engine.Engine - INFO - [generated in 0.00048s] [('abd5cb4b5d994bdfa0def38930aef940', '08bed5cb877c4f6f80f43f19718a3e3d'), ('d15bac9288ac45e8bae32cac734c02ea', 'cc392d6aaf49407fa396fe720a60db9b'), ('19c91baa8e464231a120a0b5b306933b', '7b29e7faaeb646998439110ba6075f87'), ('d15bac9288ac45e8bae32cac734c02ea', '7087ea4a354d4c439e2568fc9bfd27a7'), ('abd5cb4b5d994bdfa0def38930aef940', '944b66d3811648c7a5a621fdf9dfa072')]
+2025-05-28 20:06:32,274 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-28 20:06:32,278 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-28 20:06:32,280 - sqlalchemy.engine.Engine - INFO - SELECT user.uuid, user.chat_id, user.name, user.role, user.managed_class_uuid, user.school_uuid, user.created_at, user.updated_at 
+FROM user 
+WHERE user.uuid = ?
+2025-05-28 20:06:32,280 - sqlalchemy.engine.Engine - INFO - [generated in 0.00040s] ('d15bac9288ac45e8bae32cac734c02ea',)
+2025-05-28 20:06:32,282 - sqlalchemy.engine.Engine - INFO - SELECT user.uuid, user.chat_id, user.name, user.role, user.managed_class_uuid, user.school_uuid, user.created_at, user.updated_at 
+FROM user 
+WHERE user.uuid = ?
+2025-05-28 20:06:32,282 - sqlalchemy.engine.Engine - INFO - [cached since 0.002412s ago] ('abd5cb4b5d994bdfa0def38930aef940',)
+2025-05-28 20:06:32,284 - sqlalchemy.engine.Engine - INFO - SELECT user.uuid, user.chat_id, user.name, user.role, user.managed_class_uuid, user.school_uuid, user.created_at, user.updated_at 
+FROM user 
+WHERE user.uuid = ?
+2025-05-28 20:06:32,284 - sqlalchemy.engine.Engine - INFO - [cached since 0.004253s ago] ('19c91baa8e464231a120a0b5b306933b',)
+2025-05-28 20:06:32,287 - sqlalchemy.engine.Engine - INFO - UPDATE user SET managed_class_uuid=?, updated_at=? WHERE user.uuid = ?
+2025-05-28 20:06:32,287 - sqlalchemy.engine.Engine - INFO - [generated in 0.00051s] ('847645a2daea433195c146e09dcc41f1', '2025-05-28 20:06:32.287199', 'd15bac9288ac45e8bae32cac734c02ea')
+2025-05-28 20:06:32,288 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-28 20:06:32,292 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-28 20:06:32,293 - sqlalchemy.engine.Engine - INFO - SELECT user.uuid, user.chat_id, user.name, user.role, user.managed_class_uuid, user.school_uuid, user.created_at, user.updated_at 
+FROM user 
+WHERE user.uuid = ?
+2025-05-28 20:06:32,293 - sqlalchemy.engine.Engine - INFO - [cached since 0.01355s ago] ('d15bac9288ac45e8bae32cac734c02ea',)
+2025-05-28 20:06:32,294 - tg_bot.setup.auto_init - INFO - Auto-initialization completed successfully
+2025-05-28 20:06:32,295 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-05-28 20:06:32,428 - root - INFO - Initializing hidden router for webhooks: /webhook. (/usr/src/app/app/routers/webhook.py)
+2025-05-30 08:38:27,835 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-30 08:38:27,836 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("teacher_subject")
+2025-05-30 08:38:27,837 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-30 08:38:27,838 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("parent_child")
+2025-05-30 08:38:27,839 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-30 08:38:27,839 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("user_class")
+2025-05-30 08:38:27,840 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-30 08:38:27,840 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("user")
+2025-05-30 08:38:27,841 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-30 08:38:27,842 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("school")
+2025-05-30 08:38:27,842 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-30 08:38:27,843 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("subject")
+2025-05-30 08:38:27,843 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-30 08:38:27,844 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("class")
+2025-05-30 08:38:27,844 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-30 08:38:27,845 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("grade")
+2025-05-30 08:38:27,845 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-30 08:38:27,846 - sqlalchemy.engine.Engine - INFO - PRAGMA main.table_info("attendance")
+2025-05-30 08:38:27,847 - sqlalchemy.engine.Engine - INFO - [raw sql] ()
+2025-05-30 08:38:27,848 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-30 08:38:27,849 - fastapi_app - INFO - Database models initialized
+2025-05-30 08:38:27,849 - tg_bot.setup.auto_init - INFO - Starting auto-initialization
+2025-05-30 08:38:27,892 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-30 08:38:27,895 - sqlalchemy.engine.Engine - INFO - INSERT INTO school (uuid, name, address, phone, email, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)
+2025-05-30 08:38:27,895 - sqlalchemy.engine.Engine - INFO - [generated in 0.00053s] ('01bf50f7776b4c9aaed7fca5356e4b40', 'Demo School', '123 Demo Street', '+1234567890', 'demo@school.com', '2025-05-30 08:38:27.895110', '2025-05-30 08:38:27.895115')
+2025-05-30 08:38:27,898 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-30 08:38:27,903 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-30 08:38:27,907 - sqlalchemy.engine.Engine - INFO - SELECT school.uuid, school.name, school.address, school.phone, school.email, school.created_at, school.updated_at 
+FROM school 
+WHERE school.uuid = ?
+2025-05-30 08:38:27,907 - sqlalchemy.engine.Engine - INFO - [generated in 0.00041s] ('01bf50f7776b4c9aaed7fca5356e4b40',)
+2025-05-30 08:38:27,910 - sqlalchemy.engine.Engine - INFO - INSERT INTO class (uuid, name, start_year, school_uuid, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+2025-05-30 08:38:27,910 - sqlalchemy.engine.Engine - INFO - [generated in 0.00057s] ('a0441398ac4f4179a1647fdbac2d8b04', '9A', 2024, '01bf50f7776b4c9aaed7fca5356e4b40', '2025-05-30 08:38:27.910347', '2025-05-30 08:38:27.910351')
+2025-05-30 08:38:27,912 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-30 08:38:27,917 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-30 08:38:27,918 - sqlalchemy.engine.Engine - INFO - SELECT class.uuid, class.name, class.start_year, class.school_uuid, class.created_at, class.updated_at 
+FROM class 
+WHERE class.uuid = ?
+2025-05-30 08:38:27,919 - sqlalchemy.engine.Engine - INFO - [generated in 0.00045s] ('a0441398ac4f4179a1647fdbac2d8b04',)
+2025-05-30 08:38:27,922 - sqlalchemy.engine.Engine - INFO - INSERT INTO subject (uuid, name, school_uuid, class_uuid, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?)
+2025-05-30 08:38:27,923 - sqlalchemy.engine.Engine - INFO - [generated in 0.00040s (insertmanyvalues) 1/1 (unordered)] ('fd608d32981d4858b790298d73023045', 'Mathematics', '01bf50f7776b4c9aaed7fca5356e4b40', 'a0441398ac4f4179a1647fdbac2d8b04', '2025-05-30 08:38:27.922602', '2025-05-30 08:38:27.922607', '095b75f90a3e4a2b85ca7437453c1a0f', 'Physics', '01bf50f7776b4c9aaed7fca5356e4b40', 'a0441398ac4f4179a1647fdbac2d8b04', '2025-05-30 08:38:27.922616', '2025-05-30 08:38:27.922618', 'a5631aba53fb41c1b98d993edd9e3a00', 'Chemistry', '01bf50f7776b4c9aaed7fca5356e4b40', 'a0441398ac4f4179a1647fdbac2d8b04', '2025-05-30 08:38:27.922627', '2025-05-30 08:38:27.922628', 'f4a20a010eca47ceb1c8e171cd80f7b6', 'Biology', '01bf50f7776b4c9aaed7fca5356e4b40', 'a0441398ac4f4179a1647fdbac2d8b04', '2025-05-30 08:38:27.922636', '2025-05-30 08:38:27.922638', 'c89c86418e994b8ca1b0c4166a165b8a', 'English', '01bf50f7776b4c9aaed7fca5356e4b40', 'a0441398ac4f4179a1647fdbac2d8b04', '2025-05-30 08:38:27.922645', '2025-05-30 08:38:27.922647')
+2025-05-30 08:38:27,925 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-30 08:38:27,933 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-30 08:38:27,935 - sqlalchemy.engine.Engine - INFO - SELECT subject.uuid, subject.name, subject.school_uuid, subject.class_uuid, subject.created_at, subject.updated_at 
+FROM subject 
+WHERE subject.uuid = ?
+2025-05-30 08:38:27,935 - sqlalchemy.engine.Engine - INFO - [generated in 0.00039s] ('fd608d32981d4858b790298d73023045',)
+2025-05-30 08:38:27,937 - sqlalchemy.engine.Engine - INFO - SELECT subject.uuid, subject.name, subject.school_uuid, subject.class_uuid, subject.created_at, subject.updated_at 
+FROM subject 
+WHERE subject.uuid = ?
+2025-05-30 08:38:27,937 - sqlalchemy.engine.Engine - INFO - [cached since 0.002504s ago] ('095b75f90a3e4a2b85ca7437453c1a0f',)
+2025-05-30 08:38:27,939 - sqlalchemy.engine.Engine - INFO - SELECT subject.uuid, subject.name, subject.school_uuid, subject.class_uuid, subject.created_at, subject.updated_at 
+FROM subject 
+WHERE subject.uuid = ?
+2025-05-30 08:38:27,939 - sqlalchemy.engine.Engine - INFO - [cached since 0.004228s ago] ('a5631aba53fb41c1b98d993edd9e3a00',)
+2025-05-30 08:38:27,940 - sqlalchemy.engine.Engine - INFO - SELECT subject.uuid, subject.name, subject.school_uuid, subject.class_uuid, subject.created_at, subject.updated_at 
+FROM subject 
+WHERE subject.uuid = ?
+2025-05-30 08:38:27,941 - sqlalchemy.engine.Engine - INFO - [cached since 0.006059s ago] ('f4a20a010eca47ceb1c8e171cd80f7b6',)
+2025-05-30 08:38:27,942 - sqlalchemy.engine.Engine - INFO - SELECT subject.uuid, subject.name, subject.school_uuid, subject.class_uuid, subject.created_at, subject.updated_at 
+FROM subject 
+WHERE subject.uuid = ?
+2025-05-30 08:38:27,943 - sqlalchemy.engine.Engine - INFO - [cached since 0.008104s ago] ('c89c86418e994b8ca1b0c4166a165b8a',)
+2025-05-30 08:38:27,947 - sqlalchemy.engine.Engine - INFO - INSERT INTO user (uuid, chat_id, name, role, managed_class_uuid, school_uuid, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?)
+2025-05-30 08:38:27,947 - sqlalchemy.engine.Engine - INFO - [generated in 0.00035s (insertmanyvalues) 1/1 (unordered)] ('14b9598bbef04622a4ab88fc14cd27b0', None, 'John Doe', 'homeroom_teacher', None, '01bf50f7776b4c9aaed7fca5356e4b40', '2025-05-30 08:38:27.947105', '2025-05-30 08:38:27.947111', '6cca28c1fb924d1fade2250bba4c7718', None, 'Jane Smith', 'subject_teacher', None, '01bf50f7776b4c9aaed7fca5356e4b40', '2025-05-30 08:38:27.947120', '2025-05-30 08:38:27.947122', 'ba094bb8868f404e8d3eb2f37faf4bfc', None, 'Bob Johnson', 'subject_teacher', None, '01bf50f7776b4c9aaed7fca5356e4b40', '2025-05-30 08:38:27.947129', '2025-05-30 08:38:27.947131')
+2025-05-30 08:38:27,950 - sqlalchemy.engine.Engine - INFO - INSERT INTO teacher_subject (teacher_uuid, subject_uuid) VALUES (?, ?)
+2025-05-30 08:38:27,950 - sqlalchemy.engine.Engine - INFO - [generated in 0.00038s] [('6cca28c1fb924d1fade2250bba4c7718', 'f4a20a010eca47ceb1c8e171cd80f7b6'), ('14b9598bbef04622a4ab88fc14cd27b0', 'fd608d32981d4858b790298d73023045'), ('ba094bb8868f404e8d3eb2f37faf4bfc', 'c89c86418e994b8ca1b0c4166a165b8a'), ('14b9598bbef04622a4ab88fc14cd27b0', '095b75f90a3e4a2b85ca7437453c1a0f'), ('6cca28c1fb924d1fade2250bba4c7718', 'a5631aba53fb41c1b98d993edd9e3a00')]
+2025-05-30 08:38:27,952 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-30 08:38:27,956 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-30 08:38:27,957 - sqlalchemy.engine.Engine - INFO - SELECT user.uuid, user.chat_id, user.name, user.role, user.managed_class_uuid, user.school_uuid, user.created_at, user.updated_at 
+FROM user 
+WHERE user.uuid = ?
+2025-05-30 08:38:27,958 - sqlalchemy.engine.Engine - INFO - [generated in 0.00043s] ('14b9598bbef04622a4ab88fc14cd27b0',)
+2025-05-30 08:38:27,960 - sqlalchemy.engine.Engine - INFO - SELECT user.uuid, user.chat_id, user.name, user.role, user.managed_class_uuid, user.school_uuid, user.created_at, user.updated_at 
+FROM user 
+WHERE user.uuid = ?
+2025-05-30 08:38:27,960 - sqlalchemy.engine.Engine - INFO - [cached since 0.003112s ago] ('6cca28c1fb924d1fade2250bba4c7718',)
+2025-05-30 08:38:27,963 - sqlalchemy.engine.Engine - INFO - SELECT user.uuid, user.chat_id, user.name, user.role, user.managed_class_uuid, user.school_uuid, user.created_at, user.updated_at 
+FROM user 
+WHERE user.uuid = ?
+2025-05-30 08:38:27,963 - sqlalchemy.engine.Engine - INFO - [cached since 0.005694s ago] ('ba094bb8868f404e8d3eb2f37faf4bfc',)
+2025-05-30 08:38:27,966 - sqlalchemy.engine.Engine - INFO - UPDATE user SET managed_class_uuid=?, updated_at=? WHERE user.uuid = ?
+2025-05-30 08:38:27,967 - sqlalchemy.engine.Engine - INFO - [generated in 0.00056s] ('a0441398ac4f4179a1647fdbac2d8b04', '2025-05-30 08:38:27.966851', '14b9598bbef04622a4ab88fc14cd27b0')
+2025-05-30 08:38:27,968 - sqlalchemy.engine.Engine - INFO - COMMIT
+2025-05-30 08:38:27,973 - sqlalchemy.engine.Engine - INFO - BEGIN (implicit)
+2025-05-30 08:38:27,974 - sqlalchemy.engine.Engine - INFO - SELECT user.uuid, user.chat_id, user.name, user.role, user.managed_class_uuid, user.school_uuid, user.created_at, user.updated_at 
+FROM user 
+WHERE user.uuid = ?
+2025-05-30 08:38:27,974 - sqlalchemy.engine.Engine - INFO - [cached since 0.0167s ago] ('14b9598bbef04622a4ab88fc14cd27b0',)
+2025-05-30 08:38:27,975 - tg_bot.setup.auto_init - INFO - Auto-initialization completed successfully
+2025-05-30 08:38:27,976 - sqlalchemy.engine.Engine - INFO - ROLLBACK
+2025-05-30 08:38:28,142 - root - INFO - Initializing hidden router for webhooks: /webhook. (/usr/src/app/app/routers/webhook.py)

@@ -53,7 +53,7 @@ async def start(message: Message, state: FSMContext):
     try:
         # Check if user exists
         try:
-            response = await make_api_request("GET", f"/user?chat_id={message.from_user.id}")
+            response = await make_api_request("GET", f"/users/by_chat_id?chat_id={message.from_user.id}")
             # User exists, show role-specific menu
             user_data = response.json()
             role = Roles(user_data["role"])
@@ -105,7 +105,7 @@ async def process_role(callback: CallbackQuery, state: FSMContext):
         # Create user
         response = await make_api_request(
             "POST",
-            "/user",
+            "/users/",
             json={
                 "chat_id": callback.from_user.id,
                 "name": user_data["name"],
@@ -130,7 +130,7 @@ async def process_role(callback: CallbackQuery, state: FSMContext):
 async def my_class(callback: CallbackQuery):
     """Show homeroom teacher's class"""
     try:
-        response = await make_api_request("GET", f"/user?chat_id={callback.from_user.id}")
+        response = await make_api_request("GET", f"/users/by_chat_id?chat_id={callback.from_user.id}")
         
         if response.status_code == 200:
             user_data = response.json()
@@ -162,7 +162,7 @@ async def my_class(callback: CallbackQuery):
 async def my_children(callback: CallbackQuery):
     """Show parent's children"""
     try:
-        response = await make_api_request("GET", f"/user?chat_id={callback.from_user.id}")
+        response = await make_api_request("GET", f"/users/by_chat_id?chat_id={callback.from_user.id}")
         
         if response.status_code == 200:
             user_data = response.json()
@@ -192,7 +192,7 @@ async def show_statistics(callback_query: CallbackQuery, bot: Bot):
         # Get user data first
         user_response = await make_api_request(
             "GET",
-            f"/user?chat_id={callback_query.from_user.id}"
+            f"/users/by_chat_id?chat_id={callback_query.from_user.id}"
         )
         if not user_response:
             await callback_query.message.answer(

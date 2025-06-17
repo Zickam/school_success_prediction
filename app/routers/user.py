@@ -154,7 +154,7 @@ async def delete_user(
     await session.commit()
 
 
-@router.get("", responses={404: {}}, response_model=UserResponse)
+@router.get("/by_chat_id", responses={404: {}}, response_model=UserResponse)
 async def get_user_by_id(
     chat_id: int | None = None,
     user_uuid: UUID | None = None,
