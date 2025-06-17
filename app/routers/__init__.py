@@ -5,17 +5,19 @@ from .class_ import router as class_router
 from .subject import router as subject_router
 from .grade import router as grade_router
 from .statistics import router as statistics_router
+from .ml import router as ml_router
 from .webhook import webhook_router
 
 api_router = APIRouter()
 
-# Include all routers
-api_router.include_router(user_router, prefix="/user", tags=["user"])
-api_router.include_router(school_router, prefix="/school", tags=["school"])
-api_router.include_router(class_router, prefix="/class", tags=["class"])
-api_router.include_router(subject_router, prefix="/subject", tags=["subject"])
-api_router.include_router(grade_router, prefix="/grade", tags=["grade"])
-api_router.include_router(statistics_router, prefix="/statistics", tags=["statistics"])
+# Include all routers without redundant prefixes (routers have their own prefixes)
+api_router.include_router(user_router, tags=["users"])
+api_router.include_router(school_router, tags=["schools"])
+api_router.include_router(class_router, tags=["classes"])
+api_router.include_router(subject_router, tags=["subjects"])
+api_router.include_router(grade_router, tags=["grades"])
+api_router.include_router(statistics_router, tags=["statistics"])
+api_router.include_router(ml_router, tags=["ml"])
 
 __all__ = [
     'api_router',
@@ -25,5 +27,6 @@ __all__ = [
     'subject_router',
     'grade_router',
     'statistics_router',
+    'ml_router',
     'webhook_router',
 ]
