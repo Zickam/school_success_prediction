@@ -8,6 +8,7 @@ import os
 from collections import defaultdict
 from io import BytesIO
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from fastapi import APIRouter, Query
 from fastapi import Response, HTTPException
@@ -196,18 +197,20 @@ async def plot_user_progression(
 
     # Step 2: Extract all unique month labels across subjects
     all_months = sorted({(y, m) for pts in subject_points.values() for (y, m, _) in pts})
-    month_labels = [f"{y}-M{str(m).zfill(2)}" for (y, m) in all_months]
+    month_datetimes = [datetime.datetime(y, m, 1) for (y, m) in all_months]
 
-    # Step 3: Plot
     plt.figure(figsize=(10, 6))
-    for subject, records in subject_points.items():
-        months = [f"{y}-M{str(m).zfill(2)}" for (y, m, _) in records]
-        marks = [mark for _, _, mark in records]
-        plt.plot(months, marks, marker='o', label=subject)
 
-    plt.xlabel('Month')
-    plt.ylabel('Average Mark')
-    plt.title('Average Marks per Month for Each Subject')
+    for subject, records in subject_points.items():
+        x = [datetime.datetime(y, m, 1) for (y, m, _) in records]
+        y = [mark for (_, _, mark) in records]
+        plt.plot(x, y, marker='o', label=subject)
+
+    plt.xlabel("Month")
+    plt.ylabel("Average Mark")
+    plt.title("Average Marks per Month for Each Subject")
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
     plt.xticks(rotation=45)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     plt.grid(True)
