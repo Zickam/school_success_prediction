@@ -67,6 +67,27 @@ async def joinClass(call: CallbackQuery, state: FSMContext):
         await call.message.answer(f"Произошла ошибка: {resp.status_code, resp.text}")
 
 
+@router.message(Command("my_grades"))
+@updateUserDecorator
+async def showMyGrades(msg: Message, state: FSMContext):
+    resp = await httpx_client.get("mark", params={"chat_id": msg.chat.id})
+    resp = resp.json()
+
+    marks = {}
+    for mark in resp:
+        discipline = mark["discipline"]
+        if discipline not in marks:
+            marks[discipline] = []
+
+        marks[discipline].append(mark["mark"])
+
+    message = "Твои оценки:\n\n"
+    for discipline, _marks in marks.items():
+        message += discipline + ": " + str(_marks)[1:-1] + "\n"
+
+    await msg.answer(message)
+
+
 @router.message()
 @updateUserDecorator
 async def showMenu(msg: Message, state: FSMContext):

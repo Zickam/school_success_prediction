@@ -7,7 +7,7 @@ SCHOOLS = ["Школа №1", "Школа №2"]
 CLASSES = ["7А", "8Б", "9В"]
 DISCIPLINES = [
     "Математика", "Русский язык", "Физика", "История", "Химия",
-    "География", "Биология", "Обществознание", "Английский язык"
+    "География", "Биология", "Обществознание", "Английский язык", "Пропуски по уважительной причине", "Пропуски без уважительной причины"
 ]
 MARKS = [2, 3, 4, 5]
 
@@ -49,7 +49,7 @@ def join_class(user_uuid, class_uuid):
 
 
 def add_mark(user_uuid, class_uuid):
-    for _ in range(random.randint(1, 3)):
+    for _ in range(random.randint(50, 100)):
         requests.post(f"{BASE_URL}/mark", json={
             "user_uuid": user_uuid,
             "class_uuid": class_uuid,
