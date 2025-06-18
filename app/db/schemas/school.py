@@ -49,3 +49,4 @@ class UserClassMarkCreate(BaseModel):
     class_uuid: UUID
     mark: float
     discipline: str
+    created_at: datetime.datetime | None = None

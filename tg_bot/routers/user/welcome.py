@@ -1,9 +1,10 @@
 import logging
+import tempfile
 
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, FSInputFile
 
 from tg_bot.filters import IsPrivate, IsPrivateCallback
 from tg_bot import keyboards
@@ -129,6 +130,7 @@ async def showStatistics(msg: Message, state: FSMContext):
 @updateUserDecorator
 async def show_prediction(msg: Message, state: FSMContext):
     try:
+        # 📊 Прогноз успеваемости
         resp = await httpx_client.get("/user/predict_success", params={"chat_id": msg.chat.id})
         if resp.status_code != 200:
             await msg.answer("Не удалось получить прогноз. Попробуй позже.")
@@ -138,29 +140,40 @@ async def show_prediction(msg: Message, state: FSMContext):
 
         if data.get("status") == "unknown":
             await msg.answer("У тебя пока нет оценок, поэтому прогноз невозможен.")
+        else:
+            emoji = {
+                "отлично": "🟢",
+                "вероятно успешно": "🟡",
+                "под вопросом": "🟠",
+                "высокий риск троек": "🔴"
+            }.get(data["status"], "❓")
+
+            text = (
+                f"<b>📈 Прогноз на полугодие</b>\n\n"
+                f"Статус: <b>{emoji} {data['status']}</b>\n"
+                f"Уверенность: <b>{int(data['confidence'] * 100)}%</b>\n"
+                f"Оценок всего: <b>{data['total_marks']}</b>\n"
+                f"Троек и ниже: <b>{data['bad_marks']}</b>\n\n"
+                f"{data['message']}"
+            )
+            await msg.answer(text, parse_mode="HTML")
+
+        # 📈 Прогресс по неделям — график
+        plot_resp = await httpx_client.get("/user/plot_progression", params={"chat_id": msg.chat.id})
+        if plot_resp.status_code != 200:
+            await msg.answer("Не удалось получить график прогресса.")
             return
 
-        emoji = {
-            "отлично": "🟢",
-            "вероятно успешно": "🟡",
-            "под вопросом": "🟠",
-            "высокий риск троек": "🔴"
-        }.get(data["status"], "❓")
+        # сохраняем изображение временно
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+            tmp.write(plot_resp.content)
+            tmp_path = tmp.name
 
-        text = (
-            f"<b>📈 Прогноз на полугодие</b>\n\n"
-            f"Статус: <b>{emoji} {data['status']}</b>\n"
-            f"Уверенность: <b>{int(data['confidence'] * 100)}%</b>\n"
-            f"Оценок всего: <b>{data['total_marks']}</b>\n"
-            f"Троек и ниже: <b>{data['bad_marks']}</b>\n\n"
-            f"{data['message']}"
-        )
-
-        await msg.answer(text, parse_mode="HTML")
+        await msg.answer_photo(photo=FSInputFile(tmp_path), caption="📊 График твоего прогресса по предметам")
 
     except Exception as e:
-        await msg.answer("Произошла ошибка при получении прогноза.")
-        raise e  # опционально: можно логировать
+        await msg.answer("Произошла ошибка при получении данных.")
+        raise e  # или логируй как нужно
 
 
 @router.message()

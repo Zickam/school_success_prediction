@@ -1,5 +1,6 @@
 import os
 from uuid import uuid4
+from datetime import datetime
 
 from sqlalchemy import create_engine, Column, Integer, String, Uuid, ForeignKey, UUID, Float, DateTime, func
 from sqlalchemy.orm import relationship
@@ -39,7 +40,7 @@ class UserClassMark(Base):
     class_uuid = Column(UUID(as_uuid=True), ForeignKey("classes.uuid"))
     mark = Column(Float)  # or Integer if marks are whole numbers
     discipline = Column(String)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     # Relationships
     user = relationship("User", back_populates="class_marks")
