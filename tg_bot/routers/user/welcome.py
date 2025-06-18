@@ -15,21 +15,33 @@ router.message.filter(IsPrivate())
 router.callback_query.filter(IsPrivateCallback())
 
 
+async def getClassDescription(_class_resp: dict) -> str:
+    _school_resp = (await httpx_client.get("school", params={"uuid": _class_resp["school_uuid"]})).json()
+    return f"Школа: {_school_resp['facility_name']}\n" + f"Класс: {_class_resp['class_name']}\n" + f"Начало обучения: {_class_resp['start_year']}\n"
+
+
 @router.message(Command("start"))
 @updateUserDecorator
 async def start(msg: Message, state: FSMContext):
-    class_uuid_to_join = msg.text.replace("/start ", "")
+    logging.info(msg.text)
+    class_uuid_to_join = msg.text.replace("/start", "").strip()
+    logging.info(class_uuid_to_join)
     if not class_uuid_to_join:
         await msg.answer("Привет! Это бот для оценки успехов школьников. Обратись к своему учителю для получения приглашения в класс!")
         return
 
-    class_resp = await httpx_client.get("school/class", params={"uuid": class_uuid_to_join})
+    class_resp = await httpx_client.get("class", params={"uuid": class_uuid_to_join})
     if class_resp.status_code == 200:
+        class_resp = class_resp.json()
+        class_description = await getClassDescription(class_resp)
+
+        text = f"Привет! Это бот для оценки успехов школьников. Тебя пригласили в класс.\n\n" + class_description
         await msg.answer(
-            f"Привет! Это бот для оценки успехов школьников. Тебя пригласили в класс: {class_resp.text}",
+            text,
             reply_markup=keyboards.user.welcome.keyboardAcceptInvite(class_uuid_to_join)
         )
     else:
+        logging.info(f"start function {class_resp.status_code} {class_resp.text}")
         await msg.answer(f"Привет! Это бот для оценки успехов школьников. Скорее всего с твоей ссылкой для приглашения в класс что-то не так, обратись к учителю за получением новой")
 
 
@@ -39,11 +51,23 @@ async def joinClass(call: CallbackQuery, state: FSMContext):
     class_uuid = call.data.replace("join|", "")
     data = (await state.get_data())
     logging.info(data)
-    resp = await httpx_client.post("school/class/student_join", params={"user_uuid": data["user_uuid"],
+    resp = await httpx_client.post("class/student_join", params={"user_uuid": data["user_uuid"],
                                                                  "class_uuid": class_uuid})
     if resp.status_code == 409:
         await call.message.answer(f"Ты уже состоишь в этом классе")
     elif resp.status_code == 200:
-        await call.message.answer(f"Ты присоединился к классу {resp.json()}")
+        class_description = await getClassDescription(resp.json())
+        await call.message.answer(f"Ты присоединился к классу\n\n{class_description}")
     else:
         await call.message.answer(f"Произошла ошибка: {resp.status_code, resp.text}")
+
+
+@router.message()
+@updateUserDecorator
+async def showMenu(msg: Message, state: FSMContext):
+    await msg.answer("Привет! Это бот для оценки успехов школьников. Обратись к своему учителю для получения приглашения в класс!")
+
+@router.callback_query(F.data == "menu")
+@updateUserDecorator
+async def showMenuCQ(call: CallbackQuery, state: FSMContext):
+    await showMenu(call.message, state)
