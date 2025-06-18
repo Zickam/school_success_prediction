@@ -34,8 +34,5 @@ base_url = f"{DATA_TRANSFER_PROTOCOL}://app:{os.getenv('API_PORT')}/"
 # verify=False because this shit is used locally only
 httpx_client = CustomAsyncClient(
     base_url=base_url,
-    verify=False,
-    auth_url=f"{base_url}token",
-    username=os.getenv("AUTH_USERNAME"),
-    password=os.getenv("AUTH_PASSWORD")
+    verify=False
 )

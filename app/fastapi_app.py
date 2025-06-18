@@ -26,8 +26,7 @@ async def lifespan(app: FastAPI):
     # asyncio.run(utilities.initSchemasAndTortoise(
     #     TORTOISE_ORM_CONFIG))  # BE VERY CAREFUL WITH THIS BECAUSE IT HELPS THE OPENAPI TO DETECT ALL THE INCLUDED FIELDS
 
-    from app.routers import webhook, auth
-    app.include_router(auth.router)
+    from app.routers import webhook
     app.include_router(webhook.router)
 
     from app.routers import api_router
