@@ -73,7 +73,7 @@ def main():
         for i, cname in enumerate(CLASSES)
     ]
 
-    for i in range(3):
+    for i in range(50):
         chat_id = 10000 + i
         name = f"Ученик{i}"
         user_uuid = create_user(chat_id, name)

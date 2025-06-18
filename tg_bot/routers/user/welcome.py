@@ -121,6 +121,7 @@ async def showMyGrades(msg: Message, state: FSMContext):
 @router.message(Command("statistics"))
 @updateUserDecorator
 async def showStatistics(msg: Message, state: FSMContext):
+    # Текстовая статистика
     stats_resp = await httpx_client.get("/teacher/statistics")
     if stats_resp.status_code != 200:
         await msg.answer("Произошла ошибка при получении статистики.")
@@ -134,7 +135,6 @@ async def showStatistics(msg: Message, state: FSMContext):
 
     message = "📊 <b>Общая статистика по классам:</b>\n\n"
     for item in stats:
-        # Получаем название школы
         school_resp = await httpx_client.get("/school", params={"uuid": item["school_uuid"]})
         if school_resp.status_code == 200:
             school_name = school_resp.json()["facility_name"]
@@ -153,6 +153,18 @@ async def showStatistics(msg: Message, state: FSMContext):
         message += "\n"
 
     await msg.answer(message, parse_mode="HTML")
+
+    # Пироговые диаграммы
+    distribution_resp = await httpx_client.get("/teacher/plot_avg_distribution")
+    if distribution_resp.status_code == 200:
+        buf = BytesIO(distribution_resp.content)
+        buf.name = "distribution.png"
+        await msg.answer_photo(
+            photo=BufferedInputFile(buf.read(), filename="distribution.png"),
+            caption="📈 Распределение учеников по среднему баллу"
+        )
+    else:
+        await msg.answer("Не удалось получить график распределения по классам.")
 
 
 @router.message(Command("analysis"))
