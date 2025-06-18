@@ -5,11 +5,16 @@ from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, FSInputFile
+from aiogram.types import InputFile
+from io import BytesIO
+from aiogram.types import BufferedInputFile
+
 
 from tg_bot.filters import IsPrivate, IsPrivateCallback
 from tg_bot import keyboards
 from tg_bot.config import httpx_client
 from tg_bot.common import updateUserDecorator
+
 
 router = Router()
 router.message.filter(IsPrivate())
@@ -71,22 +76,46 @@ async def joinClass(call: CallbackQuery, state: FSMContext):
 @router.message(Command("my_grades"))
 @updateUserDecorator
 async def showMyGrades(msg: Message, state: FSMContext):
-    resp = await httpx_client.get("mark", params={"chat_id": msg.chat.id})
-    resp = resp.json()
+    try:
+        # Получаем оценки
+        marks_resp = await httpx_client.get("mark", params={"chat_id": msg.chat.id})
+        marks = marks_resp.json()
 
-    marks = {}
-    for mark in resp:
-        discipline = mark["discipline"]
-        if discipline not in marks:
-            marks[discipline] = []
+        if not marks:
+            await msg.answer("У тебя пока нет оценок.")
+            return
 
-        marks[discipline].append(mark["mark"])
+        # Составляем текст
+        subject_marks = {}
+        for mark in marks:
+            subject = mark["discipline"]
+            subject_marks.setdefault(subject, []).append(mark["mark"])
 
-    message = "Твои оценки:\n\n"
-    for discipline, _marks in marks.items():
-        message += discipline + ": " + str(_marks)[1:-1] + "\n"
+        message = "📚 <b>Твои оценки:</b>\n\n"
+        for subject, grades in subject_marks.items():
+            grades_str = ", ".join(str(g) for g in grades)
+            message += f"<b>{subject}</b>: {grades_str}\n"
 
-    await msg.answer(message)
+        await msg.answer(message, parse_mode="HTML")
+
+        # Получаем график
+        chart_resp = await httpx_client.get("user/plot_subject_averages", params={"chat_id": msg.chat.id})
+        if chart_resp.status_code == 200:
+            from io import BytesIO
+            from aiogram.types import InputFile
+
+            buf = BytesIO(chart_resp.content)
+            buf.name = "grades.png"
+            await msg.answer_photo(
+                photo=BufferedInputFile(buf.read(), filename="grades.png"),
+                caption="Средние оценки по предметам 📊"
+            )
+        else:
+            await msg.answer("Не удалось построить график.")
+
+    except Exception as e:
+        await msg.answer("Произошла ошибка при получении данных.")
+        raise e
 
 
 @router.message(Command("statistics"))
@@ -126,7 +155,7 @@ async def showStatistics(msg: Message, state: FSMContext):
     await msg.answer(message, parse_mode="HTML")
 
 
-@router.message(Command("prediction"))
+@router.message(Command("analysis"))
 @updateUserDecorator
 async def show_prediction(msg: Message, state: FSMContext):
     try:
@@ -142,10 +171,8 @@ async def show_prediction(msg: Message, state: FSMContext):
             await msg.answer("У тебя пока нет оценок, поэтому прогноз невозможен.")
         else:
             emoji = {
-                "отлично": "🟢",
-                "вероятно успешно": "🟡",
-                "под вопросом": "🟠",
-                "высокий риск троек": "🔴"
+                "успешный": "🟢",
+                "неуспешный": "🔴"
             }.get(data["status"], "❓")
 
             text = (

@@ -127,16 +127,16 @@ async def predict_success(
 
     # Простая эвристика:
     if count_failing == 0:
-        level = "отлично"
+        level = "успешный"
         confidence = 0.95
     elif count_failing <= 2:
-        level = "вероятно успешно"
+        level = "успешный"
         confidence = 0.75
     elif count_failing <= count_total // 2:
-        level = "под вопросом"
+        level = "неуспешный"
         confidence = 0.4
     else:
-        level = "высокий риск троек"
+        level = "неуспешный"
         confidence = 0.2
 
     return {
@@ -213,6 +213,62 @@ async def plot_user_progression(
     plt.grid(True)
     plt.tight_layout()
 
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    return Response(content=buf.read(), media_type="image/png")
+
+
+@router.get("/plot_subject_averages", response_class=Response)
+async def plot_subject_averages(
+    user_uuid: UUID = Query(default=None),
+    chat_id: int = Query(default=None),
+    session: AsyncSession = Depends(engine.getSession)
+):
+    if not user_uuid and not chat_id:
+        return Response(status_code=400, content="Provide user_uuid or chat_id")
+
+    stmt = (
+        select(UserClassMark.discipline, UserClassMark.mark)
+        .join(UserClassMark.user)
+        .where(
+            or_(
+                User.uuid == user_uuid if user_uuid else False,
+                User.chat_id == chat_id if chat_id else False
+            )
+        )
+    )
+    result = await session.execute(stmt)
+    data = result.all()
+
+    if not data:
+        return Response(status_code=404, content="No marks found for this user")
+
+    # Подсчёт средней оценки по каждому предмету
+    subject_marks = defaultdict(list)
+    for discipline, mark in data:
+        subject_marks[discipline].append(mark)
+
+    subjects = list(subject_marks.keys())
+    averages = [sum(marks) / len(marks) for marks in subject_marks.values()]
+
+    # Построение графика
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(subjects, averages)
+    plt.ylabel("Средняя оценка")
+    plt.title("Средняя оценка по каждому предмету")
+    plt.ylim(1, 5.5)
+    plt.xticks(rotation=45)
+    plt.grid(axis='y')
+
+    # Добавление значений над столбиками
+    for bar, avg in zip(bars, averages):
+        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1, f"{avg:.1f}", ha='center', va='bottom')
+
+    plt.tight_layout()
+
+    # Отправка как изображения
     buf = BytesIO()
     plt.savefig(buf, format="png")
     plt.close()
