@@ -6,13 +6,14 @@ from uuid import UUID
 from typing import Annotated
 import os
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from fastapi import Response, HTTPException
 from pydantic import BaseModel
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text, or_, not_
 
+from ..db.declaration.school import UserClassMark
 from ..db import schemas, engine
 from ..db import declaration
 from ..db.declaration.school import Class
@@ -89,3 +90,56 @@ async def getUserClass(
         raise HTTPException(status_code=404, detail="No class found for this user")
 
     return classes[0]
+
+
+@router.get("/predict_success")
+async def predict_success(
+    user_uuid: UUID | None = Query(default=None),
+    chat_id: int | None = Query(default=None),
+    session: AsyncSession = Depends(engine.getSession)
+):
+    if not user_uuid and not chat_id:
+        return {"error": "user_uuid or chat_id is required"}
+
+    stmt = select(UserClassMark.mark).join(User).where(
+        or_(
+            User.uuid == user_uuid if user_uuid else False,
+            User.chat_id == chat_id if chat_id else False
+        )
+    )
+
+    result = await session.execute(stmt)
+    marks = result.scalars().all()
+
+    if not marks:
+        return {
+            "status": "unknown",
+            "confidence": 0.0,
+            "message": "У ученика нет оценок, невозможно сделать прогноз."
+        }
+
+    # --- ТУПАЯ ЛОГИКА АНАЛИЗА ---
+    count_total = len(marks)
+    count_failing = len([m for m in marks if m <= 3])
+
+    # Простая эвристика:
+    if count_failing == 0:
+        level = "отлично"
+        confidence = 0.95
+    elif count_failing <= 2:
+        level = "вероятно успешно"
+        confidence = 0.75
+    elif count_failing <= count_total // 2:
+        level = "под вопросом"
+        confidence = 0.4
+    else:
+        level = "высокий риск троек"
+        confidence = 0.2
+
+    return {
+        "status": level,
+        "confidence": round(confidence, 2),
+        "total_marks": count_total,
+        "bad_marks": count_failing,
+        "message": f"Оценок всего: {count_total}, из них 'троек и ниже': {count_failing}"
+    }

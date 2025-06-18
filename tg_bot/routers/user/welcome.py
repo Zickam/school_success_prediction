@@ -88,6 +88,81 @@ async def showMyGrades(msg: Message, state: FSMContext):
     await msg.answer(message)
 
 
+@router.message(Command("statistics"))
+@updateUserDecorator
+async def showStatistics(msg: Message, state: FSMContext):
+    stats_resp = await httpx_client.get("/teacher/statistics")
+    if stats_resp.status_code != 200:
+        await msg.answer("Произошла ошибка при получении статистики.")
+        return
+
+    stats = stats_resp.json()
+
+    if not stats:
+        await msg.answer("Пока что нет оценок.")
+        return
+
+    message = "📊 <b>Общая статистика по классам:</b>\n\n"
+    for item in stats:
+        # Получаем название школы
+        school_resp = await httpx_client.get("/school", params={"uuid": item["school_uuid"]})
+        if school_resp.status_code == 200:
+            school_name = school_resp.json()["facility_name"]
+        else:
+            school_name = "Неизвестная школа"
+
+        message += f"<b>{school_name}</b>\n"
+        message += f"Класс: {item['class_name']} ({item['start_year']} г.)\n"
+
+        if not item["disciplines"]:
+            message += "   — нет оценок\n\n"
+            continue
+
+        for disc in item["disciplines"]:
+            message += f"   • {disc['discipline']}: ср. балл {disc['average_mark']} (всего {disc['marks_count']})\n"
+        message += "\n"
+
+    await msg.answer(message, parse_mode="HTML")
+
+
+@router.message(Command("prediction"))
+@updateUserDecorator
+async def show_prediction(msg: Message, state: FSMContext):
+    try:
+        resp = await httpx_client.get("/user/predict_success", params={"chat_id": msg.chat.id})
+        if resp.status_code != 200:
+            await msg.answer("Не удалось получить прогноз. Попробуй позже.")
+            return
+
+        data = resp.json()
+
+        if data.get("status") == "unknown":
+            await msg.answer("У тебя пока нет оценок, поэтому прогноз невозможен.")
+            return
+
+        emoji = {
+            "отлично": "🟢",
+            "вероятно успешно": "🟡",
+            "под вопросом": "🟠",
+            "высокий риск троек": "🔴"
+        }.get(data["status"], "❓")
+
+        text = (
+            f"<b>📈 Прогноз на полугодие</b>\n\n"
+            f"Статус: <b>{emoji} {data['status']}</b>\n"
+            f"Уверенность: <b>{int(data['confidence'] * 100)}%</b>\n"
+            f"Оценок всего: <b>{data['total_marks']}</b>\n"
+            f"Троек и ниже: <b>{data['bad_marks']}</b>\n\n"
+            f"{data['message']}"
+        )
+
+        await msg.answer(text, parse_mode="HTML")
+
+    except Exception as e:
+        await msg.answer("Произошла ошибка при получении прогноза.")
+        raise e  # опционально: можно логировать
+
+
 @router.message()
 @updateUserDecorator
 async def showMenu(msg: Message, state: FSMContext):
@@ -97,3 +172,4 @@ async def showMenu(msg: Message, state: FSMContext):
 @updateUserDecorator
 async def showMenuCQ(call: CallbackQuery, state: FSMContext):
     await showMenu(call.message, state)
+

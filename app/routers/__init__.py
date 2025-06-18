@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.routers import user, webhook, school, class_router, mark
+from app.routers import user, webhook, school, class_router, mark, teacher
 
 api_router = APIRouter()
 
@@ -9,7 +9,8 @@ routers = [
     webhook.router,
     school.router,
     class_router.router,
-    mark.router
+    mark.router,
+    teacher.router
 ]
 
 for router in routers:
