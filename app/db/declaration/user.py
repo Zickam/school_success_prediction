@@ -22,7 +22,7 @@ class User(Base):
     __tablename__ = 'users'
 
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    chat_id = Column(Integer, unique=True)
+    chat_id = Column(Integer)
     role = Column(Enum(Roles))
     name = Column(String)
 

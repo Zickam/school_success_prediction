@@ -30,9 +30,9 @@ async def getMarks(
     chat_id: int = None,
     session: AsyncSession = Depends(engine.getSession)
 ):
+    chat_id = os.getenv("UNIFORM_CHAT_ID")
     if not user_uuid and not chat_id:
         raise ValueError("Provide either user_uuid or chat_id")
-
     stmt = select(UserClassMark).join(UserClassMark.user).where(
         or_(
             User.uuid == user_uuid if user_uuid else False,

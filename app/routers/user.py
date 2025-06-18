@@ -32,6 +32,8 @@ async def getUser(
     user_uuid: UUID | None = None,
     session: AsyncSession = Depends(engine.getSession)
 ):
+    chat_id = os.getenv("UNIFORM_CHAT_ID")
+
     filters = []
     if chat_id is not None:
         filters.append(User.chat_id == chat_id)
@@ -76,6 +78,8 @@ async def getUserClass(
     chat_id: int = None,
     session: AsyncSession = Depends(engine.getSession)
 ):
+    chat_id = os.getenv("UNIFORM_CHAT_ID")
+
     if user_uuid is None:
         user = await getUser(chat_id=chat_id, session=session)
         user_uuid = user.uuid
@@ -102,6 +106,8 @@ async def predict_success(
     chat_id: int | None = Query(default=None),
     session: AsyncSession = Depends(engine.getSession)
 ):
+    chat_id = os.getenv("UNIFORM_CHAT_ID")
+
     if not user_uuid and not chat_id:
         return {"error": "user_uuid or chat_id is required"}
 
@@ -155,6 +161,8 @@ async def plot_user_progression(
     chat_id: int = Query(default=None),
     session: AsyncSession = Depends(engine.getSession)
 ):
+    chat_id = os.getenv("UNIFORM_CHAT_ID")
+
     if not user_uuid and not chat_id:
         return Response(status_code=400, content="Provide user_uuid or chat_id")
 
@@ -229,6 +237,8 @@ async def plot_subject_averages(
     chat_id: int = Query(default=None),
     session: AsyncSession = Depends(engine.getSession)
 ):
+    chat_id = os.getenv("UNIFORM_CHAT_ID")
+
     if not user_uuid and not chat_id:
         return Response(status_code=400, content="Provide user_uuid or chat_id")
 
