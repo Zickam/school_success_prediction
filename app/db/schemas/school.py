@@ -1,3 +1,5 @@
+import datetime
+
 from pydantic import BaseModel
 from uuid import UUID
 
@@ -28,3 +30,22 @@ class ClassCreate(BaseModel):
     start_year: int
     class_name: str
     school_uuid: UUID
+
+
+class UserClassMarkRead(BaseModel):
+    uuid: UUID
+    user_uuid: UUID
+    class_uuid: UUID
+    mark: float
+    discipline: str
+    created_at: datetime.datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserClassMarkCreate(BaseModel):
+    user_uuid: UUID
+    class_uuid: UUID
+    mark: float
+    discipline: str

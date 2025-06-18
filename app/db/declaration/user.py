@@ -27,3 +27,5 @@ class User(Base):
     name = Column(String)
 
     classes = relationship("Class", secondary=user_class_table, back_populates="users")
+
+    class_marks = relationship("UserClassMark", back_populates="user")
