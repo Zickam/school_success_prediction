@@ -24,9 +24,9 @@ import logging
 
 
 async def main():
-    from config import dp, bot
-    from filters import IsPrivate, IsPrivateCallback
-    from routers.user.init_routers import router as user_router
+    from tg_bot.config import dp, bot
+    from tg_bot.filters import IsPrivate, IsPrivateCallback
+    from tg_bot.routers.user.init_routers import router as user_router
     # await bot.delete_webhook(drop_pending_updates=True)
 
     dp.message.filter(IsPrivate())

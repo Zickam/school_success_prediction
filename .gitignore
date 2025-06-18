@@ -10,3 +10,6 @@
 !/env/example/
 
 example.db
+
+/.venv
+/logs

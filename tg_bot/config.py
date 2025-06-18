@@ -10,7 +10,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import RedisStorage
 from redis.asyncio import Redis
 
-from utilities import CustomAsyncClient
+from tg_bot.utilities import CustomAsyncClient
 
 
 redis = Redis(host="redis")
