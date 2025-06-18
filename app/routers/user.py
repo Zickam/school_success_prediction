@@ -100,6 +100,7 @@ async def getUserClass(
     return classes[0]
 
 
+
 @router.get("/predict_success")
 async def predict_success(
     user_uuid: UUID | None = Query(default=None),
@@ -128,31 +129,40 @@ async def predict_success(
             "message": "У ученика нет оценок, невозможно сделать прогноз."
         }
 
-    # --- ТУПАЯ ЛОГИКА АНАЛИЗА ---
-    count_total = len(marks)
-    count_failing = len([m for m in marks if m <= 3])
+    # Расчёты
+    total = len(marks)
+    bad_count = sum(1 for m in marks if m <= 3)
+    avg = sum(marks) / total
+    bad_ratio = bad_count / total
 
-    # Простая эвристика:
-    if count_failing == 0:
-        level = "успешный"
+    # Прогноз
+    if avg >= 4.5 and bad_count == 0:
+        status = "успешный"
         confidence = 0.95
-    elif count_failing <= 2:
-        level = "успешный"
-        confidence = 0.75
-    elif count_failing <= count_total // 2:
-        level = "неуспешный"
+    elif avg >= 4.0 and bad_ratio <= 0.1:
+        status = "успешный"
+        confidence = 0.85
+    elif avg >= 3.5 and bad_ratio <= 0.25:
+        status = "успешный"
+        confidence = 0.6
+    elif avg >= 3.0:
+        status = "неуспешный"
         confidence = 0.4
     else:
-        level = "неуспешный"
+        status = "неуспешный"
         confidence = 0.2
 
     return {
-        "status": level,
+        "status": status,
         "confidence": round(confidence, 2),
-        "total_marks": count_total,
-        "bad_marks": count_failing,
-        "message": f"Оценок всего: {count_total}, из них 'троек и ниже': {count_failing}"
+        "total_marks": total,
+        "bad_marks": bad_count,
+        "message": (
+            f"Средний балл: {avg:.2f}, оценок всего: {total}, "
+            f"из них троек и ниже: {bad_count} ({bad_ratio:.0%})"
+        )
     }
+
 
 
 @router.get("/plot_progression", response_class=Response)
