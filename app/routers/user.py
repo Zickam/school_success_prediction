@@ -15,6 +15,7 @@ from sqlalchemy import select, text, or_, not_
 
 from ..db import schemas, engine
 from ..db import declaration
+from ..db.declaration.school import Class
 from ..db.declaration.user import User
 
 router = APIRouter(tags=["User"], prefix="/user")
@@ -62,3 +63,29 @@ async def createUser(
     await session.commit()
 
     return new_user
+
+
+@router.get("/class", response_model=schemas.school.ClassRead, responses={404: {}})
+async def getUserClass(
+    user_uuid: UUID = None,
+    chat_id: int = None,
+    session: AsyncSession = Depends(engine.getSession)
+):
+    if user_uuid is None:
+        user = await getUser(chat_id=chat_id, session=session)
+        user_uuid = user.uuid
+
+    logging.info(user_uuid)
+    query = select(Class).join(Class.users).where(
+        or_(
+            User.uuid == user_uuid if user_uuid is not None else False,
+            User.chat_id == chat_id if chat_id is not None else False
+        )
+    )
+    result = await session.execute(query)
+    classes = result.scalars().all()
+
+    if not classes:
+        raise HTTPException(status_code=404, detail="No class found for this user")
+
+    return classes[0]

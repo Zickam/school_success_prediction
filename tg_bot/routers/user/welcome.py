@@ -23,9 +23,14 @@ async def getClassDescription(_class_resp: dict) -> str:
 @router.message(Command("start"))
 @updateUserDecorator
 async def start(msg: Message, state: FSMContext):
-    logging.info(msg.text)
+    user_class = await httpx_client.get("user/class", params={"chat_id": msg.chat.id})
+    if user_class.status_code == 200:
+        class_description = await getClassDescription(user_class.json())
+        text = "Ты состоишь в классе:\n\n" + class_description
+        await msg.answer(text)
+        return
+
     class_uuid_to_join = msg.text.replace("/start", "").strip()
-    logging.info(class_uuid_to_join)
     if not class_uuid_to_join:
         await msg.answer("Привет! Это бот для оценки успехов школьников. Обратись к своему учителю для получения приглашения в класс!")
         return
