@@ -129,13 +129,11 @@ async def predict_success(
             "message": "У ученика нет оценок, невозможно сделать прогноз."
         }
 
-    # Расчёты
     total = len(marks)
     bad_count = sum(1 for m in marks if m <= 3)
     avg = sum(marks) / total
     bad_ratio = bad_count / total
 
-    # Прогноз
     if avg >= 4.5 and bad_count == 0:
         status = "успешный"
         confidence = 0.95
@@ -152,17 +150,21 @@ async def predict_success(
         status = "неуспешный"
         confidence = 0.2
 
+    message = (
+        f"Средний балл: {avg:.2f}, оценок всего: {total}, "
+        f"из них троек и ниже: {bad_count} ({bad_ratio:.0%})"
+    )
+
+    if status == "успешный":
+        message += "\n\n🎯 У тебя отличная успеваемость, попробуй свои силы в олимпиадах!"
+
     return {
         "status": status,
         "confidence": round(confidence, 2),
         "total_marks": total,
         "bad_marks": bad_count,
-        "message": (
-            f"Средний балл: {avg:.2f}, оценок всего: {total}, "
-            f"из них троек и ниже: {bad_count} ({bad_ratio:.0%})"
-        )
+        "message": message
     }
-
 
 
 @router.get("/plot_progression", response_class=Response)
@@ -232,9 +234,9 @@ async def plot_user_progression(
         y = [mark for (_, _, mark) in records]
         plt.plot(x, y, marker='o', label=subject)
 
-    plt.xlabel("Month")
-    plt.ylabel("Average Mark")
-    plt.title("Average Marks per Month for Each Subject")
+    plt.xlabel("Месяц")
+    plt.ylabel("Средняя Оценка")
+    plt.title("Средняя Оценка за Месяц для Каждого Предмета")
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
     plt.xticks(rotation=45)
@@ -326,8 +328,8 @@ async def plot_user_progression_accumulated(
         plt.plot(x, y, marker='o', label=subject)
 
     plt.xlabel("Month")
-    plt.ylabel("Cumulative Average Mark")
-    plt.title("Progressive Average Marks by Subject")
+    plt.ylabel("Кумулятивная Средняя Оценка")
+    plt.title("Кумулятивные Средние Оценки для Каждого Предмета")
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
     plt.xticks(rotation=45)

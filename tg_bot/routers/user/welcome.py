@@ -23,7 +23,7 @@ router.callback_query.filter(IsPrivateCallback())
 
 async def getClassDescription(_class_resp: dict) -> str:
     _school_resp = (await httpx_client.get("school", params={"uuid": _class_resp["school_uuid"]})).json()
-    return f"{_school_resp['facility_name']}\n" + f"Класс: {_class_resp['class_name']}\n" + f"Начало обучения: {_class_resp['start_year']}\n"
+    return f"{_school_resp['facility_name']}\n" + f"Класс: {_class_resp['class_name']}\n"
 
 
 @router.message(Command("start"))
@@ -312,10 +312,12 @@ async def show_prediction(msg: Message, state: FSMContext):
 @router.message()
 @updateUserDecorator
 async def showMenu(msg: Message, state: FSMContext):
-    await msg.answer("Привет! Это бот для оценки успехов школьников. Обратись к своему учителю для получения приглашения в класс!")
+    await start(msg, state)
+    # await msg.answer("Привет! Это бот для оценки успехов школьников. Обратись к своему учителю для получения приглашения в класс!")
 
 @router.callback_query(F.data == "menu")
 @updateUserDecorator
 async def showMenuCQ(call: CallbackQuery, state: FSMContext):
-    await showMenu(call.message, state)
+    # await showMenu(call.message, state)
+    await start(call.message, state)
 
