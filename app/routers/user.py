@@ -141,10 +141,10 @@ async def predict_success(
         confidence = 0.95
     elif avg >= 4.0 and bad_ratio <= 0.1:
         status = "успешный"
-        confidence = 0.85
+        confidence = 0.9
     elif avg >= 3.5 and bad_ratio <= 0.25:
         status = "успешный"
-        confidence = 0.6
+        confidence = 0.85
     elif avg >= 3.0:
         status = "неуспешный"
         confidence = 0.4
