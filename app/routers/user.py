@@ -241,6 +241,89 @@ async def plot_user_progression(
     return Response(content=buf.read(), media_type="image/png")
 
 
+@router.get("/plot_accumulated", response_class=Response)
+async def plot_user_progression_accumulated(
+    user_uuid: UUID = Query(default=None),
+    chat_id: int = Query(default=None),
+    session: AsyncSession = Depends(engine.getSession)
+):
+    chat_id = os.getenv("UNIFORM_CHAT_ID")
+
+    if not user_uuid and not chat_id:
+        return Response(status_code=400, content="Provide user_uuid or chat_id")
+
+    stmt = (
+        select(UserClassMark.discipline, UserClassMark.mark, UserClassMark.created_at)
+        .join(UserClassMark.user)
+        .where(
+            or_(
+                User.uuid == user_uuid if user_uuid else False,
+                User.chat_id == chat_id if chat_id else False
+            )
+        )
+    )
+    result = await session.execute(stmt)
+    data = result.all()
+
+    if not data:
+        return Response(status_code=404, content="No marks found for this user")
+
+    from collections import defaultdict
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    from io import BytesIO
+    import datetime
+
+    # Step 1: group marks by subject and (year, month)
+    subject_monthly_marks = defaultdict(lambda: defaultdict(list))
+    for discipline, mark, created_at in data:
+        if not created_at:
+            continue
+        key = (created_at.year, created_at.month)
+        subject_monthly_marks[discipline][key].append(mark)
+
+    # Step 2: Compute cumulative average for each subject
+    subject_cumulative_points = {}
+    for subject, month_dict in subject_monthly_marks.items():
+        all_keys = sorted(month_dict.keys())
+        cumulative_marks = []
+        x_labels = []
+        total_sum = 0
+        total_count = 0
+
+        for (year, month) in all_keys:
+            marks = month_dict[(year, month)]
+            total_sum += sum(marks)
+            total_count += len(marks)
+            avg = total_sum / total_count
+            cumulative_marks.append(avg)
+            x_labels.append(datetime.datetime(year, month, 1))
+
+        subject_cumulative_points[subject] = (x_labels, cumulative_marks)
+
+    # Step 3: Plot
+    plt.figure(figsize=(10, 6))
+    for subject, (x, y) in subject_cumulative_points.items():
+        plt.plot(x, y, marker='o', label=subject)
+
+    plt.xlabel("Month")
+    plt.ylabel("Cumulative Average Mark")
+    plt.title("Progressive Average Marks by Subject")
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+    plt.xticks(rotation=45)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.grid(True)
+    plt.tight_layout()
+
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    return Response(content=buf.read(), media_type="image/png")
+
+
+
 @router.get("/plot_subject_averages", response_class=Response)
 async def plot_subject_averages(
     user_uuid: UUID = Query(default=None),

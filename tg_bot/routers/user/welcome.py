@@ -199,20 +199,30 @@ async def show_prediction(msg: Message, state: FSMContext):
 
         # 📈 Прогресс по неделям — график
         plot_resp = await httpx_client.get("/user/plot_progression", params={"chat_id": msg.chat.id})
-        if plot_resp.status_code != 200:
+        if plot_resp.status_code == 200:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                tmp.write(plot_resp.content)
+                tmp_path = tmp.name
+
+            await msg.answer_photo(photo=FSInputFile(tmp_path), caption="📊 График твоего прогресса по предметам")
+        else:
             await msg.answer("Не удалось получить график прогресса.")
-            return
 
-        # сохраняем изображение временно
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-            tmp.write(plot_resp.content)
-            tmp_path = tmp.name
+        # 📈 Накопленный прогресс — график
+        accumulated_resp = await httpx_client.get("/user/plot_accumulated", params={"chat_id": msg.chat.id})
+        if accumulated_resp.status_code == 200:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                tmp.write(accumulated_resp.content)
+                tmp_path = tmp.name
 
-        await msg.answer_photo(photo=FSInputFile(tmp_path), caption="📊 График твоего прогресса по предметам")
+            await msg.answer_photo(photo=FSInputFile(tmp_path), caption="📈 Накопленный средний балл по предметам")
+        else:
+            await msg.answer("Не удалось получить график накопленного прогресса.")
 
     except Exception as e:
         await msg.answer("Произошла ошибка при получении данных.")
-        raise e  # или логируй как нужно
+        raise e
+
 
 
 @router.message()
