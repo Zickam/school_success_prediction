@@ -6,7 +6,7 @@ BASE_URL = "http://localhost:8445"
 
 SCHOOLS = ["Школа №1"]
 CLASSES = ["7А", "8Б", "9В"]
-DISCIPLINES = ["Математика", "Русский язык", "Физика", "Биология", "Информатика"]
+DISCIPLINES = ["Математика", "Русский язык", "Физика", "Биология", "Информатика", "Пропуск по уважительной причине", "Пропуск без уважительной причины", "Пропуск по болезни"]
 
 # Grade pools by performance level
 GRADE_PROFILES = {
@@ -55,8 +55,17 @@ def random_datetime_within_year():
 def add_mark(user_uuid, class_uuid, grade_profile):
     for _ in range(random.randint(200, 300)):
         created_at = random_datetime_within_year()
-        mark = random.choice(GRADE_PROFILES[grade_profile])
         discipline = random.choice(DISCIPLINES)
+
+        if discipline in [
+            "Пропуск по уважительной причине",
+            "Пропуск без уважительной причины",
+            "Пропуск по болезни"
+        ]:
+            mark = random.randint(0, 7)  # для пропусков — от 0 до 7 дней
+        else:
+            mark = random.choice(GRADE_PROFILES[grade_profile])
+
         requests.post(f"{BASE_URL}/mark", json={
             "user_uuid": user_uuid,
             "class_uuid": class_uuid,
@@ -64,6 +73,7 @@ def add_mark(user_uuid, class_uuid, grade_profile):
             "mark": mark,
             "created_at": created_at
         })
+
 
 def main():
     school_uuid = create_school(SCHOOLS[0])

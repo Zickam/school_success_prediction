@@ -91,31 +91,41 @@ async def showMyGrades(msg: Message, state: FSMContext):
             subject = mark["discipline"]
             subject_marks.setdefault(subject, []).append(mark["mark"])
 
-        message = "📚 <b>Твои оценки:</b>\n\n"
-        for subject, grades in subject_marks.items():
-            grades_str = ", ".join(str(g) for g in grades)
-            message += f"<b>{subject}</b>: {grades_str}\n"
+        # message = "📚 <b>Твои оценки:</b>\n\n"
+        # for subject, grades in subject_marks.items():
+        #     grades_str = ", ".join(str(g) for g in grades)
+        #     message += f"<b>{subject}</b>: {grades_str}\n"
+        #
+        # await msg.answer(message, parse_mode="HTML")
 
-        await msg.answer(message, parse_mode="HTML")
-
-        # Получаем график
+        # 📈 График обычных оценок
         chart_resp = await httpx_client.get("user/plot_subject_averages", params={"chat_id": msg.chat.id})
         if chart_resp.status_code == 200:
-            from io import BytesIO
-            from aiogram.types import InputFile
-
             buf = BytesIO(chart_resp.content)
             buf.name = "grades.png"
             await msg.answer_photo(
                 photo=BufferedInputFile(buf.read(), filename="grades.png"),
-                caption="Средние оценки по предметам 📊"
+                caption="📊 Средние оценки по предметам"
             )
         else:
-            await msg.answer("Не удалось построить график.")
+            await msg.answer("Не удалось построить график оценок.")
+
+        # 📉 График пропусков
+        absences_resp = await httpx_client.get("user/plot_absences", params={"chat_id": msg.chat.id})
+        if absences_resp.status_code == 200:
+            buf = BytesIO(absences_resp.content)
+            buf.name = "absences.png"
+            await msg.answer_photo(
+                photo=BufferedInputFile(buf.read(), filename="absences.png"),
+                caption="📉 Пропуски по месяцам"
+            )
+        else:
+            await msg.answer("Не удалось построить график пропусков.")
 
     except Exception as e:
         await msg.answer("Произошла ошибка при получении данных.")
         raise e
+
 
 
 @router.message(Command("statistics"))

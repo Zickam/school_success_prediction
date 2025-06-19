@@ -15,7 +15,7 @@ from fastapi import Response, HTTPException
 from pydantic import BaseModel
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text, or_, not_
+from sqlalchemy import select, text, or_, not_, and_
 
 from ..db.declaration.school import UserClassMark
 from ..db import schemas, engine
@@ -335,13 +335,22 @@ async def plot_subject_averages(
     if not user_uuid and not chat_id:
         return Response(status_code=400, content="Provide user_uuid or chat_id")
 
+    excluded_disciplines = {
+        "Пропуск по уважительной причине",
+        "Пропуск без уважительной причины",
+        "Пропуск по болезни"
+    }
+
     stmt = (
         select(UserClassMark.discipline, UserClassMark.mark)
         .join(UserClassMark.user)
         .where(
-            or_(
-                User.uuid == user_uuid if user_uuid else False,
-                User.chat_id == chat_id if chat_id else False
+            and_(
+                UserClassMark.discipline.notin_(excluded_disciplines),
+                or_(
+                    User.uuid == user_uuid if user_uuid else False,
+                    User.chat_id == chat_id if chat_id else False
+                )
             )
         )
     )
@@ -351,7 +360,10 @@ async def plot_subject_averages(
     if not data:
         return Response(status_code=404, content="No marks found for this user")
 
-    # Подсчёт средней оценки по каждому предмету
+    from collections import defaultdict
+    import matplotlib.pyplot as plt
+    from io import BytesIO
+
     subject_marks = defaultdict(list)
     for discipline, mark in data:
         subject_marks[discipline].append(mark)
@@ -359,7 +371,6 @@ async def plot_subject_averages(
     subjects = list(subject_marks.keys())
     averages = [sum(marks) / len(marks) for marks in subject_marks.values()]
 
-    # Построение графика
     plt.figure(figsize=(10, 6))
     bars = plt.bar(subjects, averages)
     plt.ylabel("Средняя оценка")
@@ -368,13 +379,94 @@ async def plot_subject_averages(
     plt.xticks(rotation=45)
     plt.grid(axis='y')
 
-    # Добавление значений над столбиками
     for bar, avg in zip(bars, averages):
         plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1, f"{avg:.1f}", ha='center', va='bottom')
 
     plt.tight_layout()
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    return Response(content=buf.read(), media_type="image/png")
 
-    # Отправка как изображения
+
+
+@router.get("/plot_absences", response_class=Response)
+async def plot_user_absences(
+    user_uuid: UUID = Query(default=None),
+    chat_id: int = Query(default=None),
+    session: AsyncSession = Depends(engine.getSession)
+):
+    chat_id = os.getenv("UNIFORM_CHAT_ID")
+
+    if not user_uuid and not chat_id:
+        return Response(status_code=400, content="Provide user_uuid or chat_id")
+
+    # Только пропуски
+    ABSENCE_DISCIPLINES = {
+        "Пропуск по уважительной причине",
+        "Пропуск без уважительной причины",
+        "Пропуск по болезни"
+    }
+
+    stmt = (
+        select(UserClassMark.discipline, UserClassMark.mark, UserClassMark.created_at)
+        .join(UserClassMark.user)
+        .where(
+            and_(
+                UserClassMark.discipline.in_(ABSENCE_DISCIPLINES),
+                or_(
+                    User.uuid == user_uuid if user_uuid else False,
+                    User.chat_id == chat_id if chat_id else False
+                )
+            )
+        )
+    )
+    result = await session.execute(stmt)
+    data = result.all()
+
+    if not data:
+        return Response(status_code=404, content="No absences found for this user")
+
+    from collections import defaultdict
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    from io import BytesIO
+    import datetime
+
+    # Step 1: Group by subject → (year, month) → list of marks
+    subject_monthly = defaultdict(lambda: defaultdict(list))
+    for discipline, mark, created_at in data:
+        if not created_at:
+            continue
+        year, month = created_at.year, created_at.month
+        subject_monthly[discipline][(year, month)].append(mark)
+
+    subject_points = {}
+    for subject, month_dict in subject_monthly.items():
+        points = []
+        for (y, m), marks in month_dict.items():
+            avg = sum(marks) / len(marks)
+            points.append((y, m, avg))
+        subject_points[subject] = sorted(points)
+
+    # Step 2: Plot
+    plt.figure(figsize=(10, 6))
+    for subject, records in subject_points.items():
+        x = [datetime.datetime(y, m, 1) for (y, m, _) in records]
+        y = [val for (_, _, val) in records]
+        plt.plot(x, y, marker='o', label=subject)
+
+    plt.xlabel("Month")
+    plt.ylabel("Average Absence Value")
+    plt.title("Пропуски по месяцам")
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    plt.gca().xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+    plt.xticks(rotation=45)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.grid(True)
+    plt.tight_layout()
+
     buf = BytesIO()
     plt.savefig(buf, format="png")
     plt.close()
