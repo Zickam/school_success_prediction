@@ -23,37 +23,70 @@ router.callback_query.filter(IsPrivateCallback())
 
 async def getClassDescription(_class_resp: dict) -> str:
     _school_resp = (await httpx_client.get("school", params={"uuid": _class_resp["school_uuid"]})).json()
-    return f"Школа: {_school_resp['facility_name']}\n" + f"Класс: {_class_resp['class_name']}\n" + f"Начало обучения: {_class_resp['start_year']}\n"
+    return f"{_school_resp['facility_name']}\n" + f"Класс: {_class_resp['class_name']}\n" + f"Начало обучения: {_class_resp['start_year']}\n"
 
 
 @router.message(Command("start"))
 @updateUserDecorator
 async def start(msg: Message, state: FSMContext):
-    user_class = await httpx_client.get("user/class", params={"chat_id": msg.chat.id})
-    if user_class.status_code == 200:
-        class_description = await getClassDescription(user_class.json())
-        text = "Ты состоишь в классе:\n\n" + class_description
-        await msg.answer(text)
-        return
+    try:
+        # Получаем пользователя
+        user_resp = await httpx_client.get("user", params={"chat_id": msg.chat.id})
+        if user_resp.status_code != 200:
+            raise Exception("User not found")
+        user = user_resp.json()
+        user_name = user.get("name", "Пользователь")
 
-    class_uuid_to_join = msg.text.replace("/start", "").strip()
-    if not class_uuid_to_join:
-        await msg.answer("Привет! Это бот для оценки успехов школьников. Обратись к своему учителю для получения приглашения в класс!")
-        return
+        # Проверяем, есть ли пользователь в классе
+        user_class_resp = await httpx_client.get("user/class", params={"chat_id": msg.chat.id})
+        if user_class_resp.status_code == 200:
+            class_description = await getClassDescription(user_class_resp.json())
 
-    class_resp = await httpx_client.get("class", params={"uuid": class_uuid_to_join})
-    if class_resp.status_code == 200:
-        class_resp = class_resp.json()
-        class_description = await getClassDescription(class_resp)
+            text = (
+                f"👋 <b>Привет, {user_name}!</b>\n\n"
+                f"Ты уже присоединился к классу:\n\n"
+                f"{class_description}"
+            )
+            await msg.answer(text, parse_mode="HTML")
+            return
 
-        text = f"Привет! Это бот для оценки успехов школьников. Тебя пригласили в класс.\n\n" + class_description
-        await msg.answer(
-            text,
-            reply_markup=keyboards.user.welcome.keyboardAcceptInvite(class_uuid_to_join)
-        )
-    else:
-        logging.info(f"start function {class_resp.status_code} {class_resp.text}")
-        await msg.answer(f"Привет! Это бот для оценки успехов школьников. Скорее всего с твоей ссылкой для приглашения в класс что-то не так, обратись к учителю за получением новой")
+        # Пользователь не в классе — проверяем ссылку
+        class_uuid_to_join = msg.text.replace("/start", "").strip()
+        if not class_uuid_to_join:
+            await msg.answer(
+                f"👋 <b>Привет, {user_name}!</b>\n\n"
+                f"Это бот для оценки успехов школьников.\n"
+                f"Попроси у своего учителя ссылку на приглашение в класс 🏫",
+                parse_mode="HTML"
+            )
+            return
+
+        class_resp = await httpx_client.get("class", params={"uuid": class_uuid_to_join})
+        if class_resp.status_code == 200:
+            class_info = class_resp.json()
+            class_description = await getClassDescription(class_info)
+
+            text = (
+                f"👋 <b>Привет, {user_name}!</b>\n\n"
+                f"Тебя пригласили присоединиться к следующему классу:\n\n"
+                f"{class_description}"
+            )
+            await msg.answer(
+                text,
+                reply_markup=keyboards.user.welcome.keyboardAcceptInvite(class_uuid_to_join),
+                parse_mode="HTML"
+            )
+        else:
+            logging.warning(f"Invalid invite link: {class_resp.status_code} {class_resp.text}")
+            await msg.answer(
+                f"⚠️ <b>Ошибка!</b>\n\n"
+                f"Ссылка на класс недействительна. Попроси у учителя новую ссылку.",
+                parse_mode="HTML"
+            )
+
+    except Exception as e:
+        logging.exception("Ошибка в обработке команды /start")
+        await msg.answer("Произошла ошибка при старте. Попробуй позже.")
 
 
 @router.callback_query(F.data.startswith("join|"))
@@ -186,12 +219,20 @@ async def showStatistics(msg: Message, state: FSMContext):
         message += f"<b>{school_name}</b>\n"
         message += f"Класс: {item['class_name']} ({item['start_year']} г.)\n"
 
-        if not item["disciplines"]:
+        if not item["disciplines"] and not item.get("absences"):
             message += "   — нет оценок\n\n"
             continue
 
+        # Дисциплины с оценками
         for disc in item["disciplines"]:
             message += f"   • {disc['discipline']}: ср. балл {disc['average_mark']} (всего {disc['marks_count']})\n"
+
+        # Пропуски — отдельно
+        if item.get("absences"):
+            message += "\n"
+            for ab in item["absences"]:
+                message += f"   • {ab['discipline']}: {ab['absences_count']} пропуск(ов)\n"
+
         message += "\n"
 
     await msg.answer(message, parse_mode="HTML")
@@ -207,6 +248,7 @@ async def showStatistics(msg: Message, state: FSMContext):
         )
     else:
         await msg.answer("Не удалось получить график распределения по классам.")
+
 
 
 @router.message(Command("analysis"))

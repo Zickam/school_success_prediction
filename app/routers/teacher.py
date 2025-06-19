@@ -29,43 +29,61 @@ router = APIRouter(tags=["Teacher"], prefix="/teacher")
 
 @router.get("/statistics")
 async def get_class_statistics(session: AsyncSession = Depends(engine.getSession)):
-    # Query all class UUIDs with names
+    from app.db.declaration.school import UserClassMark  # импортируем напрямую
+
+    # Дисциплины, которые считаются пропусками
+    absence_disciplines = {
+        "Пропуск по уважительной причине",
+        "Пропуск без уважительной причины",
+        "Пропуск по болезни"
+    }
+
+    # Получаем все классы
     class_query = await session.execute(select(Class))
     classes = class_query.scalars().all()
 
     stats = []
 
     for cl in classes:
-        # For each class, calculate average and count per discipline
+        # Запрос по всем предметам
         stmt = (
             select(
-                declaration.school.UserClassMark.discipline,
-                func.avg(declaration.school.UserClassMark.mark).label("average"),
-                func.count(declaration.school.UserClassMark.mark).label("count")
+                UserClassMark.discipline,
+                func.avg(UserClassMark.mark).label("average"),
+                func.count(UserClassMark.mark).label("count")
             )
-            .where(declaration.school.UserClassMark.class_uuid == cl.uuid)
-            .group_by(declaration.school.UserClassMark.discipline)
+            .where(UserClassMark.class_uuid == cl.uuid)
+            .group_by(UserClassMark.discipline)
         )
-
         result = await session.execute(stmt)
-        discipline_stats = [
-            {
-                "discipline": row.discipline,
-                "average_mark": round(row.average, 2),
-                "marks_count": row.count
-            }
-            for row in result.all()
-        ]
+
+        discipline_stats = []
+        absence_stats = []
+
+        for row in result.all():
+            if row.discipline in absence_disciplines:
+                absence_stats.append({
+                    "discipline": row.discipline,
+                    "absences_count": row.count
+                })
+            else:
+                discipline_stats.append({
+                    "discipline": row.discipline,
+                    "average_mark": round(row.average, 2),
+                    "marks_count": row.count
+                })
 
         stats.append({
             "class_uuid": str(cl.uuid),
             "class_name": cl.class_name,
             "start_year": cl.start_year,
             "school_uuid": str(cl.school_uuid),
-            "disciplines": discipline_stats
+            "disciplines": discipline_stats,
+            "absences": absence_stats  # отдельное поле
         })
 
     return stats
+
 
 
 @router.get("/plot_avg_distribution", response_class=Response)
@@ -80,14 +98,14 @@ async def plot_avg_distribution(session: AsyncSession = Depends(engine.getSessio
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     import math
 
-    plt.rcParams.update({
-        'font.size': 30,  # базовый размер шрифта
-        'axes.titlesize': 20,  # размер заголовков
-        'axes.labelsize': 20,  # размер подписей осей (если есть)
-        'xtick.labelsize': 20,
-        'ytick.labelsize': 20,
-        'legend.fontsize': 20
-    })
+    # plt.rcParams.update({
+    #     'font.size': 30,  # базовый размер шрифта
+    #     'axes.titlesize': 20,  # размер заголовков
+    #     'axes.labelsize': 20,  # размер подписей осей (если есть)
+    #     'xtick.labelsize': 20,
+    #     'ytick.labelsize': 20,
+    #     'legend.fontsize': 20
+    # })
 
     fig, axs = plt.subplots(
         nrows=math.ceil(len(classes) / 2), ncols=2,

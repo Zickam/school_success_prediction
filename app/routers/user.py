@@ -194,12 +194,20 @@ async def plot_user_progression(
 
     from collections import defaultdict
     import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
     from io import BytesIO
+    import datetime
 
-    # Step 1: Build subject -> list of (year, month, avg_mark)
+    # Step 1: Filter and group by subject and (year, month)
+    excluded_subjects = {
+        "Пропуск по уважительной причине",
+        "Пропуск без уважительной причины",
+        "Пропуск по болезни"
+    }
+
     subject_monthly_avg = defaultdict(lambda: defaultdict(list))
     for discipline, mark, created_at in data:
-        if not created_at:
+        if not created_at or discipline in excluded_subjects:
             continue
         year = created_at.year
         month = created_at.month
@@ -213,12 +221,12 @@ async def plot_user_progression(
             month_avg_list.append((year, month, avg))
         subject_points[subject] = sorted(month_avg_list, key=lambda x: (x[0], x[1]))
 
-    # Step 2: Extract all unique month labels across subjects
+    if not subject_points:
+        return Response(status_code=404, content="No valid subjects to plot")
+
     all_months = sorted({(y, m) for pts in subject_points.values() for (y, m, _) in pts})
-    month_datetimes = [datetime.datetime(y, m, 1) for (y, m) in all_months]
 
     plt.figure(figsize=(10, 6))
-
     for subject, records in subject_points.items():
         x = [datetime.datetime(y, m, 1) for (y, m, _) in records]
         y = [mark for (_, _, mark) in records]
@@ -239,6 +247,7 @@ async def plot_user_progression(
     plt.close()
     buf.seek(0)
     return Response(content=buf.read(), media_type="image/png")
+
 
 
 @router.get("/plot_accumulated", response_class=Response)
