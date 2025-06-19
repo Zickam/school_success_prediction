@@ -247,18 +247,34 @@ async def plot_user_progression_accumulated(
     chat_id: int = Query(default=None),
     session: AsyncSession = Depends(engine.getSession)
 ):
+    import os
+    from collections import defaultdict
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    from io import BytesIO
+    import datetime
+
     chat_id = os.getenv("UNIFORM_CHAT_ID")
 
     if not user_uuid and not chat_id:
         return Response(status_code=400, content="Provide user_uuid or chat_id")
 
+    excluded_disciplines = {
+        "Пропуск по уважительной причине",
+        "Пропуск без уважительной причины",
+        "Пропуск по болезни"
+    }
+
     stmt = (
         select(UserClassMark.discipline, UserClassMark.mark, UserClassMark.created_at)
         .join(UserClassMark.user)
         .where(
-            or_(
-                User.uuid == user_uuid if user_uuid else False,
-                User.chat_id == chat_id if chat_id else False
+            and_(
+                UserClassMark.discipline.notin_(excluded_disciplines),
+                or_(
+                    User.uuid == user_uuid if user_uuid else False,
+                    User.chat_id == chat_id if chat_id else False
+                )
             )
         )
     )
@@ -267,12 +283,6 @@ async def plot_user_progression_accumulated(
 
     if not data:
         return Response(status_code=404, content="No marks found for this user")
-
-    from collections import defaultdict
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
-    from io import BytesIO
-    import datetime
 
     # Step 1: group marks by subject and (year, month)
     subject_monthly_marks = defaultdict(lambda: defaultdict(list))

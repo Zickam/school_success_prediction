@@ -85,18 +85,49 @@ async def showMyGrades(msg: Message, state: FSMContext):
             await msg.answer("У тебя пока нет оценок.")
             return
 
-        # Составляем текст
-        subject_marks = {}
+        absences = {
+            "Пропуск по уважительной причине",
+            "Пропуск без уважительной причины",
+            "Пропуск по болезни"
+        }
+
+        subject_data = {}
         for mark in marks:
             subject = mark["discipline"]
-            subject_marks.setdefault(subject, []).append(mark["mark"])
+            value = mark["mark"]
+            subject_data.setdefault(subject, []).append(value)
 
-        # message = "📚 <b>Твои оценки:</b>\n\n"
-        # for subject, grades in subject_marks.items():
-        #     grades_str = ", ".join(str(g) for g in grades)
-        #     message += f"<b>{subject}</b>: {grades_str}\n"
-        #
-        # await msg.answer(message, parse_mode="HTML")
+        # Отдельные списки
+        academic_lines = []
+        absence_lines = []
+
+        for subject, values in subject_data.items():
+            if subject in absences:
+                absence_lines.append((subject, len(values)))
+            else:
+                avg = sum(values) / len(values)
+                academic_lines.append((subject, avg))
+
+        # Сортировка для стабильности вывода
+        academic_lines.sort()
+        absence_order = [
+            "Пропуск без уважительной причины",
+            "Пропуск по болезни",
+            "Пропуск по уважительной причине"
+        ]
+        absence_lines.sort(key=lambda x: absence_order.index(x[0]) if x[0] in absence_order else 999)
+
+        # Формирование текста
+        message = "📚 <b>Твоя успеваемость:</b>\n\n"
+        for subject, avg in academic_lines:
+            message += f"• <b>{subject}</b>: средняя оценка {avg:.2f}\n"
+
+        if absence_lines:
+            message += "\n"
+            for subject, count in absence_lines:
+                message += f"• <b>{subject}</b>: {count} пропуск(ов)\n"
+
+        await msg.answer(message, parse_mode="HTML")
 
         # 📈 График обычных оценок
         chart_resp = await httpx_client.get("user/plot_subject_averages", params={"chat_id": msg.chat.id})
@@ -125,6 +156,7 @@ async def showMyGrades(msg: Message, state: FSMContext):
     except Exception as e:
         await msg.answer("Произошла ошибка при получении данных.")
         raise e
+
 
 
 
