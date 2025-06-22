@@ -273,7 +273,7 @@ async def show_prediction(msg: Message, state: FSMContext):
 
             text = (
                 f"<b>📈 Прогноз на полугодие</b>\n\n"
-                f"Статус: <b>{emoji} {data['status']}</b>\n"
+                f"Прогноз: <b>{emoji} {data['status']}</b>\n"
                 f"Уверенность: <b>{int(data['confidence'] * 100)}%</b>\n"
                 f"Оценок всего: <b>{data['total_marks']}</b>\n"
                 f"Троек и ниже: <b>{data['bad_marks']}</b>\n\n"
